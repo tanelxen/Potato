@@ -23,7 +23,7 @@ private:
     float pitch = 0;
     float yaw = 0; // -1.57
 
-    float moveSpeed = 64;
+    float moveSpeed = 96;
     float mouseSense = 0.3;
 
     glm::vec3 velocity = {0, 0, 0};

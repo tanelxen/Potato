@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
@@ -14,17 +15,17 @@
 
 CQuake3BSP::CQuake3BSP()
 {
-    m_numOfVerts = 0;
-    m_numOfFaces = 0;
-    m_numOfIndices = 0;
-    m_numOfTextures = 0;
-    m_numOfLightmaps = 0;
-    numVisibleFaces = 0;
-    skipindices = 0;
+    m_numVerts = 0;
+    m_numFaces = 0;
+    m_numIndices = 0;
+    m_numTextures = 0;
+    m_numLightmaps = 0;
 
-    m_pVerts = NULL;
-    m_pFaces = NULL;
-    m_pIndices = NULL;
+    m_pVerts = nullptr;
+    m_pFaces = nullptr;
+    m_pIndices = nullptr;
+    pTextures = nullptr;
+    pLightmaps = nullptr;
 }
 
 bool CQuake3BSP::LoadBSP(const char* filename)
@@ -48,174 +49,47 @@ bool CQuake3BSP::LoadBSP(const char* filename)
     // Read in the header and lump data
     fread(&header, 1, sizeof(tBSPHeader), fp);
     fread(&lumps, kMaxLumps, sizeof(tBSPLump), fp);
+    
+    // Faces
+    m_numFaces = lumps[kFaces].length / sizeof(tBSPFace);
+    m_pFaces = new tBSPFace[m_numFaces];
+    fseek(fp, lumps[kFaces].offset, SEEK_SET);
+    fread(m_pFaces, m_numFaces, sizeof(tBSPFace), fp);
 
-    // Allocate the vertex memory
-    m_numOfVerts = lumps[kVertices].length / sizeof(tBSPVertex);
-    m_pVerts = new tBSPVertex[m_numOfVerts];
+    // Indices
+    m_numIndices = lumps[kIndices].length / sizeof(int);
+    m_pIndices = new int[m_numIndices];
+    fseek(fp, lumps[kIndices].offset, SEEK_SET);
+    fread(m_pIndices, m_numIndices, sizeof(int), fp);
 
-    // Allocate the face memory
-    m_numOfFaces = lumps[kFaces].length / sizeof(tBSPFace);
-    m_pFaces = new tBSPFace[m_numOfFaces];
-
-    // Allocate the index memory
-    m_numOfIndices = lumps[kIndices].length / sizeof(int);
-    m_pIndices = new int[m_numOfIndices];
-
-    // Allocate memory to read in the texture information.
-    // We create a local pointer of tBSPTextures because we don't need
-    // that information once we create texture maps from it.
-    m_numOfTextures = lumps[kTextures].length / sizeof(tBSPTexture);
-
-    // Seek to the position in the file that stores the vertex information
+    // Vertices
+    m_numVerts = lumps[kVertices].length / sizeof(tBSPVertex);
+    m_pVerts = new tBSPVertex[m_numVerts];
     fseek(fp, lumps[kVertices].offset, SEEK_SET);
+    fread(m_pVerts, m_numVerts, sizeof(tBSPVertex), fp);
 
-    // Since Quake has the Z-axis pointing up, we want to convert the data so
-    // that Y-axis is pointing up (like normal!) :)
-    // Go through all of the vertices that need to be read
-    for (int i = 0; i < m_numOfVerts; i++)
+    // Swap from Quake to OpenGL coord system
+    for (int i = 0; i < m_numVerts; i++)
     {
-        // Read in the current vertex
-        fread(&m_pVerts[i], 1, sizeof(tBSPVertex), fp);
-        // Swap the y and z values, and negate the new z so Y is up.
         float temp = m_pVerts[i].vPosition.y;
         m_pVerts[i].vPosition.y = m_pVerts[i].vPosition.z;
         m_pVerts[i].vPosition.z = -temp;
     }
+    
+    // Textures (.shader filenames)
+    m_numTextures = lumps[kTextures].length / sizeof(tBSPTexture);
+    pTextures = new tBSPTexture[m_numTextures];
+    fseek(fp, lumps[kTextures].offset, SEEK_SET);
+    fread(pTextures, m_numTextures, sizeof(tBSPTexture), fp);
 
-    tBSPTexture* pTextures = new tBSPTexture[m_numOfTextures];
-
-    fseek(fp, lumps[kIndices].offset, SEEK_SET);                // Seek the index information
-    fread(m_pIndices, m_numOfIndices, sizeof(int), fp);         // index information
-    fseek(fp, lumps[kFaces].offset, SEEK_SET);                  // Seek the face information
-    fread(m_pFaces, m_numOfFaces, sizeof(tBSPFace), fp);        // face information
-    fseek(fp, lumps[kTextures].offset, SEEK_SET);               // Seek the texture information
-    fread(pTextures, m_numOfTextures, sizeof(tBSPTexture), fp); // texture information
-
-    // Create a texture from the image
-    for (int i = 0; i < m_numOfTextures; i++) {
-        // Find the extension if any and append it to the file name
-        strcpy(tname[i], pTextures[i].strName);
-        strcat(tname[i], ".jpg");
-        printf("loading: %s \n", tname[i]);
-    }
-
-    m_numOfLightmaps = lumps[kLightmaps].length / sizeof(tBSPLightmap);
-    tBSPLightmap* pLightmaps = new tBSPLightmap[m_numOfLightmaps];
-    // Seek to the position in the file that stores the lightmap information
+    // Lightmap
+    m_numLightmaps = lumps[kLightmaps].length / sizeof(tBSPLightmap);
+    pLightmaps = new tBSPLightmap[m_numLightmaps];
     fseek(fp, lumps[kLightmaps].offset, SEEK_SET);
-
-    // Go through all of the lightmaps and read them in
-    for (int i = 0; i < m_numOfLightmaps; i++) {
-        // Read in the RGB data for each lightmap
-        fread(&pLightmaps[i], 1, sizeof(tBSPLightmap), fp);
-        Rbuffers.lightMaps.push_back(pLightmaps[i]);
-    }
-    delete[] pTextures;
-    delete[] pLightmaps;
+    fread(pLightmaps, m_numLightmaps, sizeof(tBSPLightmap), fp);
 
     fclose(fp);
     return (fp);
-}
-
-// int skipindices = 0;
-void CQuake3BSP::BuildVBO()
-{
-    for (int index = 0; index < m_numOfFaces; index++)
-    {
-        tBSPFace* pFace = &m_pFaces[index];
-
-        if (pFace->type == FACE_POLYGON)
-            skipindices += pFace->numOfIndices;
-
-        CreateVBO(index);
-        CreateIndices(index);
-        CreateRenderBuffers(index);
-        // BSPDebug(index);
-        numVisibleFaces++;
-    }
-
-//    for (auto& f : Rbuffers.v_faceVBOs)
-//    {
-//        BSPDebug(f.first);
-//    }
-}
-
-void CQuake3BSP::CreateVBO(int index)
-{
-    tBSPFace* pFace = &m_pFaces[index];
-
-    for (int v = 0; v < pFace->numOfVerts; v++)
-    {
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vPosition.x);
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vPosition.y);
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vPosition.z);
-
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vTextureCoord.x);
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vTextureCoord.y);
-
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vLightmapCoord.x);
-        Rbuffers.faceVerts[index].push_back(m_pVerts[pFace->startVertIndex + v].vLightmapCoord.y);
-    }
-}
-
-void CQuake3BSP::CreateIndices(int index)
-{
-    tBSPFace* pFace = &m_pFaces[index];
-
-    for (int j = 0; j < pFace->numOfIndices; j++)
-    {
-        Rbuffers.faceIndices[index].push_back(m_pIndices[j + pFace->startIndex]);
-    }
-}
-
-void CQuake3BSP::CreateRenderBuffers(int index)
-{
-    glGenVertexArrays(1, &(FB_array.FB_Idx[index].VAO));
-    glBindVertexArray(FB_array.FB_Idx[index].VAO);
-
-    glGenBuffers(1, &(FB_array.FB_Idx[index].VBO));
-    glBindBuffer(GL_ARRAY_BUFFER, FB_array.FB_Idx[index].VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * Rbuffers.faceVerts[index].size(), &Rbuffers.faceVerts[index].front(), GL_STATIC_DRAW);
-
-    glGenBuffers(1, &(FB_array.FB_Idx[index].EBO));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, FB_array.FB_Idx[index].EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * Rbuffers.faceIndices[index].size(), &Rbuffers.faceIndices[index].front(), GL_STATIC_DRAW);
-
-    // position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (GLvoid*)0);
-
-    // texture uv
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-
-    // lightmap uv
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (GLvoid*)(5 * sizeof(GLfloat)));
-}
-
-void CQuake3BSP::RenderSingleFace(int index)
-{
-    tBSPFace* pFace = &m_pFaces[index];
-    GLuint    TexID = Rbuffers.tx_ID[index];
-    // GLuint LmID = Rbuffers.lm_ID[index];
-
-    glBindVertexArray(FB_array.FB_Idx[index].VAO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, FB_array.FB_Idx[index].EBO);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, TexID);
-
-//    glActiveTexture(GL_TEXTURE1);
-//    if (pFace->lightmapID >= 0)
-//        glBindTexture(GL_TEXTURE_2D, m_lightmap_gen_IDs[pFace->lightmapID]);
-//    else
-//        glBindTexture(GL_TEXTURE_2D, missing_LM_id);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-
-    glDrawElements(GL_TRIANGLES, Rbuffers.faceIndices[index].size(), GL_UNSIGNED_INT, 0);
 }
 
 void CQuake3BSP::GenerateTexture()
@@ -242,22 +116,24 @@ void CQuake3BSP::GenerateTexture()
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(image);
 
-    for (int i = 0; i < m_numOfFaces; i++) // copy to face vector
-    {
-        tBSPFace* Face = &m_pFaces[i];
-        Rbuffers.tx_ID[i] = Face->textureID + 2;
-    }
-
     std::vector<GLuint> missing_tex_id;
 
-    for (int i = 0; i < m_numOfTextures; i++)
+    for (int i = 0; i < m_numTextures; i++)
     {
         std::string path = "assets/";
-        path.append(tname[i]);
+        path.append(pTextures[i].strName);
+        
+        unsigned char* image = nullptr;
+        
+        std::string jpgPath = path + ".jpg";
+        image = stbi_load(jpgPath.c_str(), &width, &height, &num_channels, 3);
+        
+        if (image == nullptr)
+        {
+            std::string tgaPath = path + ".tga";
+            image = stbi_load(tgaPath.c_str(), &width, &height, &num_channels, 3);
+        }
 
-        unsigned char* image = stbi_load(path.c_str(), &width, &height, &num_channels, 3);
-
-        // filter and arrange
         if (image)
         {
             glGenTextures(1, &textureID);
@@ -266,48 +142,32 @@ void CQuake3BSP::GenerateTexture()
             // glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &aniso);
             // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Set our texture parameters
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // Set texture filtering
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            stbi_image_free(image);
+            m_textures[i] = textureID;
 
             std::cout << "glGenTexture id: " << textureID << std::endl;
         }
         else
         {
-            stbi_image_free(image);
-            glGenTextures(1, &textureID);
-            std::cout << "glGenTexture: " << textureID << std::endl;
-            missing_tex_id.push_back(textureID);      // push missing ids
-            glBindTexture(GL_TEXTURE_2D, missing_id); // bind id: 1
+            m_textures[i] = missing_id;
         }
+        
+        stbi_image_free(image);
     }
-
-    // if missing texture - replace it with id: 1
-    for (GLuint i = 0; i < Rbuffers.tx_ID.size(); i++)
-    {
-        for (auto val: missing_tex_id)
-        {
-            if (Rbuffers.tx_ID[i] == val) {
-                Rbuffers.tx_ID[i] = missing_id;
-            }
-        }
-    }
-
-} // end
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
 
 void CQuake3BSP::GenerateLightmap()
 {
     // GLfloat aniso = 8.0f;
-
-    std::ofstream logfile;
-    logfile.open("log.txt");
-    logfile << "LOG::\n\n";
 
     // generate missing lightmap
     GLfloat white_lightmap[] =
@@ -327,15 +187,11 @@ void CQuake3BSP::GenerateLightmap()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    logfile << "lm START ID: " << missing_LM_id << "\n";
-    logfile << "--------------\n";
-
-    // generate lightmaps
-    m_lightmap_gen_IDs = new GLuint[m_numOfLightmaps];
-    glGenTextures(Rbuffers.lightMaps.size(), m_lightmap_gen_IDs);
-
-    for (GLuint i = 0; i < Rbuffers.lightMaps.size(); i++) {
-        glBindTexture(GL_TEXTURE_2D, m_lightmap_gen_IDs[i]);
+    for (GLuint i = 0; i < m_numLightmaps; i++)
+    {
+        GLuint lmId = 0;
+        glGenTextures(1, &lmId);
+        glBindTexture(GL_TEXTURE_2D, lmId);
         // glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &aniso);
         // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
 
@@ -344,19 +200,75 @@ void CQuake3BSP::GenerateLightmap()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, &Rbuffers.lightMaps[i].imageBits);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, &pLightmaps[i]);
         glGenerateMipmap(GL_TEXTURE_2D);
+
+        m_lightmaps[i] = lmId;
     }
-
-    logfile << "m_numOfLightmaps " << m_numOfLightmaps;
-
-    logfile.close();
 }
 
 void CQuake3BSP::renderFaces()
 {
-    for (auto& f : Rbuffers.faceVerts)
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    for (int i = 0; i < m_numFaces; ++i)
     {
-        RenderSingleFace(f.first);
+        const tBSPFace &face = m_pFaces[i];
+
+        if (face.type != FACE_POLYGON) continue;
+
+        GLuint texId = m_textures[face.textureID];
+        GLuint lmId = m_lightmaps[face.lightmapID];
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texId);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, lmId);
+
+        glDrawElementsBaseVertex(
+                GL_TRIANGLES,
+                face.numOfIndices,
+                GL_UNSIGNED_INT,
+                (void *)(face.startIndex * sizeof(uint32_t)),
+                face.startVertIndex);
     }
+}
+
+#define VERT_POSITION_LOC 0
+#define VERT_DIFFUSE_TEX_COORD_LOC 1
+#define VERT_LIGHTMAP_TEX_COORD_LOC 2
+#define VERT_NORMAL_LOC 3
+
+void CQuake3BSP::initBuffers()
+{
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * m_numIndices, m_pIndices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tBSPVertex) * m_numVerts, m_pVerts, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(VERT_POSITION_LOC);
+    glVertexAttribPointer(VERT_POSITION_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), 0);
+
+    glEnableVertexAttribArray(VERT_DIFFUSE_TEX_COORD_LOC);
+    glVertexAttribPointer(VERT_DIFFUSE_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)12);
+
+    glEnableVertexAttribArray(VERT_LIGHTMAP_TEX_COORD_LOC);
+    glVertexAttribPointer(VERT_LIGHTMAP_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)20);
+
+    glEnableVertexAttribArray(VERT_NORMAL_LOC);
+    glVertexAttribPointer(VERT_NORMAL_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)28);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }

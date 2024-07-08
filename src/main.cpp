@@ -91,14 +91,14 @@ int main()
 #endif
 
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 8);
 
     window = glfwCreateWindow(window_width, window_height, "Demo", nullptr, nullptr);
 
     glfwSetKeyCallback(window, key_callback);
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+//    glfwSwapInterval(1);
 
     gladLoadGL();
 
@@ -140,21 +140,24 @@ int main()
 
     CQuake3BSP bsp;
 
-    if (!bsp.LoadBSP("assets/maps/level.bsp")) {
+    if (!bsp.LoadBSP("assets/maps/q3dm7.bsp")) {
         return 1;
     }
 
-    bsp.BuildVBO();
     bsp.GenerateTexture();
     bsp.GenerateLightmap();
-
-    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
-    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
+    bsp.initBuffers();
 
     Camera camera(window);
 
     double prevTime = 0;
     double deltaTime;
+
+    glfwSwapInterval(0);
+    
+    shader.bind();
+    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
+    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -175,11 +178,7 @@ int main()
 
         shader.bind();
         shader.setUniformMatrix((const float*) &mvp, "MVP");
-
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, 1);
-//        vertexBuffer.draw();
-
+        
         bsp.renderFaces();
 
         imgui_draw();
