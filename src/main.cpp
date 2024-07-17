@@ -15,6 +15,8 @@
 
 #include "Quake3Bsp.h"
 
+#include <string>
+
 //struct Vertex
 //{
 //    glm::vec3 pos;
@@ -69,8 +71,8 @@ int main()
 {
     /* Platform */
     static GLFWwindow *window;
-    const int window_width = 640;
-    const int window_height = 480;
+    const int window_width = 1440;
+    const int window_height = 900;
 
     /* GLFW */
     glfwSetErrorCallback(error_callback);
@@ -91,21 +93,22 @@ int main()
 #endif
 
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-    glfwWindowHint(GLFW_SAMPLES, 8);
+//    glfwWindowHint(GLFW_SAMPLES, 8);
 
     window = glfwCreateWindow(window_width, window_height, "Demo", nullptr, nullptr);
 
     glfwSetKeyCallback(window, key_callback);
 
     glfwMakeContextCurrent(window);
-//    glfwSwapInterval(1);
 
     gladLoadGL();
 
     const unsigned char* version = glGetString(GL_VERSION);
     printf("version: %s\n", version);
+    
+    const unsigned char* device = glGetString(GL_RENDERER);
+    printf("device: %s\n", device);
 
-    glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEPTH_TEST);
 
     VertexLayout layout;
@@ -145,7 +148,7 @@ int main()
     }
 
     bsp.GenerateTexture();
-    bsp.GenerateLightmap();
+//    bsp.GenerateLightmap();
     bsp.initBuffers();
 
     Camera camera(window);
@@ -170,13 +173,14 @@ int main()
 
         camera.updateViewport((float)width, (float)height);
         camera.update(deltaTime);
-
+        
+        glViewport(0, 0, width, height);
+        
         glClearColor(0.6, 0.8, 0.6, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4x4 mvp = camera.projection * camera.view;
-
         shader.bind();
+        glm::mat4x4 mvp = camera.projection * camera.view;
         shader.setUniformMatrix((const float*) &mvp, "MVP");
         
         bsp.renderFaces();

@@ -1,14 +1,21 @@
 #pragma once
 
 //#include <cstring>
-//#include <map>
+#include <unordered_map>
 //#include <string>
-//#include <vector>
+#include <vector>
 #include <glad/glad.h>
 #include "Quake3Types.h"
 
 #define FACE_POLYGON 1
 #define MAX_TEXTURES 1000
+
+struct Surface
+{
+    GLuint texId;
+    uint32_t bufferOffset; // offset in bytes
+    uint32_t numVerts;
+};
 
 class CQuake3BSP
 {
@@ -49,4 +56,7 @@ private:
     GLuint vao;
     GLuint vbo;
     GLuint ibo;
+    
+    std::vector<Surface> surfaces;
+    std::vector<unsigned int> indices;
 };

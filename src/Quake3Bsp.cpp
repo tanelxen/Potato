@@ -12,7 +12,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
 
-
 CQuake3BSP::CQuake3BSP()
 {
     m_numVerts = 0;
@@ -214,28 +213,13 @@ void CQuake3BSP::renderFaces()
     
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
-
-    for (int i = 0; i < m_numFaces; ++i)
+    
+    for (auto surface : surfaces)
     {
-        const tBSPFace &face = m_pFaces[i];
-
-        if (face.type != FACE_POLYGON) continue;
-
-        GLuint texId = m_textures[face.textureID];
-        GLuint lmId = m_lightmaps[face.lightmapID];
-
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texId);
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, lmId);
-
-        glDrawElementsBaseVertex(
-                GL_TRIANGLES,
-                face.numOfIndices,
-                GL_UNSIGNED_INT,
-                (void *)(face.startIndex * sizeof(uint32_t)),
-                face.startVertIndex);
+        glBindTexture(GL_TEXTURE_2D, surface.texId);
+        
+        glDrawElements(GL_TRIANGLES, surface.numVerts, GL_UNSIGNED_INT, (void *)surface.bufferOffset);
     }
 }
 
@@ -246,12 +230,41 @@ void CQuake3BSP::renderFaces()
 
 void CQuake3BSP::initBuffers()
 {
+    std::unordered_map<int, std::vector<int>> indicesByTexture;
+    
+    for (int i = 0; i < m_numFaces; ++i)
+    {
+        tBSPFace &face = m_pFaces[i];
+        
+        if (face.type != FACE_POLYGON) continue;
+        
+        for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
+        {
+            unsigned int index = m_pIndices[j] + face.startVertIndex;
+            
+            indicesByTexture[face.textureID].push_back(index);
+        }
+    }
+    
+    for (auto pair : indicesByTexture)
+    {
+        Surface surface = {0};
+        surface.texId = m_textures[pair.first];
+        
+        surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
+        surface.numVerts = (uint32_t)pair.second.size();
+        
+        surfaces.push_back(surface);
+        
+        indices.insert(indices.end(), pair.second.begin(), pair.second.end());
+    }
+    
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
     glGenBuffers(1, &ibo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * m_numIndices, m_pIndices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(), indices.data(), GL_STATIC_DRAW);
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
