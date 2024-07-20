@@ -19,9 +19,9 @@ public:
     glm::mat4x4 view;
 
 private:
-    glm::vec3 position = {0, 312, 0};
+    glm::vec3 position = {0, 8, 32};
     float pitch = 0;
-    float yaw = 0; // -1.57
+    float yaw = -1.57; // -1.57
 
     float moveSpeed = 96;
     float mouseSense = 0.3;
