@@ -101,8 +101,7 @@ void CQuake3BSP::GenerateTexture()
     GLuint missing_id = 1;
     glGenTextures(1, &missing_id); // generate missing texture
 
-    unsigned char* image =
-        stbi_load("assets/textures/_engine/missing.png", &width, &height, &num_channels, 3);
+    unsigned char* image = stbi_load("assets/textures/_engine/missing.png", &width, &height, &num_channels, 3);
 
     // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
     glBindTexture(GL_TEXTURE_2D, missing_id);
@@ -151,7 +150,8 @@ void CQuake3BSP::GenerateTexture()
 
             m_textures[i] = textureID;
 
-            std::cout << "glGenTexture id: " << textureID << std::endl;
+            std::cout << path << std::endl;
+//            std::cout << "glGenTexture id: " << textureID << std::endl;
         }
         else
         {

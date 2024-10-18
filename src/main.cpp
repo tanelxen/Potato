@@ -18,25 +18,6 @@
 
 #include <string>
 
-//struct Vertex
-//{
-//    glm::vec3 pos;
-//    glm::vec3 col;
-//};
-//
-//static const Vertex vertices[3] = {
-//        { { -0.6f, -0.4f, -2.0f }, { 1.f, 0.f, 0.f } },
-//        { {  0.6f, -0.4f, -2.0f }, { 0.f, 1.f, 0.f } },
-//        { {  0.0f,  0.6f, -2.0f }, { 0.f, 0.f, 1.f } }
-//};
-
-struct Vertex
-{
-    glm::vec3 pos;
-    glm::vec2 tx;
-    glm::vec2 lm;
-};
-
 static void error_callback(int e, const char *d) { printf("Error %d: %s\n", e, d); }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -94,8 +75,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-//    Shader shader;
-//    shader.init("assets/shaders/basic.glsl");
+    Shader shader;
+    shader.init("assets/shaders/basic.glsl");
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -108,15 +89,15 @@ int main()
 
     setImGuiStyle();
 
-//    CQuake3BSP bsp;
-//
-//    if (!bsp.LoadBSP("assets/maps/q3dm7.bsp")) {
-//        return 1;
-//    }
+    CQuake3BSP bsp;
 
-//    bsp.GenerateTexture();
-//    bsp.GenerateLightmap();
-//    bsp.initBuffers();
+    if (!bsp.LoadBSP("assets/maps/level.bsp")) {
+        return 1;
+    }
+
+    bsp.GenerateTexture();
+    bsp.GenerateLightmap();
+    bsp.initBuffers();
 
     Camera camera(window);
 
@@ -125,18 +106,22 @@ int main()
 
     glfwSwapInterval(0);
     
-//    shader.bind();
-//    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
-//    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
+    shader.bind();
+    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
+    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
     
     Grid grid;
     grid.init();
+
+    glFrontFace(GL_CCW);
 
     while (!glfwWindowShouldClose(window))
     {
         double currTime = glfwGetTime();
         deltaTime = currTime - prevTime;
         prevTime = currTime;
+
+        //deltaTime = 1.0f / ImGui::GetIO().Framerate;
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
@@ -149,12 +134,14 @@ int main()
         glClearColor(0.6, 0.8, 0.6, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//        shader.bind();
-//        glm::mat4x4 mvp = camera.projection * camera.view;
-//        shader.setUniformMatrix((const float*) &mvp, "MVP");
-//        
-//        bsp.renderFaces();
+        shader.bind();
+        glm::mat4x4 mvp = camera.projection * camera.view;
+        shader.setUniformMatrix((const float*) &mvp, "MVP");
         
+        bsp.renderFaces();
+        
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
         grid.draw(camera);
 
         imgui_draw();

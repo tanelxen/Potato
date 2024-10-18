@@ -9,43 +9,25 @@
 
 void Grid::init()
 {
-//    float vertices[] = {
-//        -0.5f, -0.5f, -2.0f,
-//        -0.5f,  0.5f, -2.0f,
-//         0.5f,  0.5f, -2.0f,
-//        
-//         0.5f,  0.5f, -2.0f,
-//         0.5f, -0.5f, -2.0f,
-//        -0.5f, -0.5f, -2.0f
-//    };
-//    
-    struct Vertex
-    {
-        glm::vec3 pos;
-        glm::vec3 col;
-    };
-    
-    static const Vertex vertices[] = {
-        { { -512.0f, 0.0f, -512.0f}, { 1.f, 0.f, 0.f } },
-        { { -512.0f, 0.0f,  512.0f}, { 0.f, 1.f, 0.f } },
-        { {  512.0f, 0.0f,  512.0f}, { 0.f, 0.f, 1.f } },
-        { {  512.0f, 0.0f,  512.0f}, { 0.f, 0.f, 1.f } },
-        { {  512.0f, 0.0f, -512.0f}, { 0.f, 0.f, 0.f } },
-        { { -512.0f, 0.0f, -512.0f}, { 1.f, 0.f, 0.f } },
+    float vertices[] = {
+       -512.0f, 0.0f, -512.0f,
+       -512.0f, 0.0f,  512.0f,
+        512.0f, 0.0f,  512.0f,
+        
+        512.0f, 0.0f,  512.0f,
+        512.0f, 0.0f, -512.0f,
+       -512.0f, 0.0f, -512.0f
     };
     
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 6, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 3, vertices, GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, pos));
-    
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

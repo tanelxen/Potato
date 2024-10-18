@@ -6,6 +6,12 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
+struct Ray
+{
+    glm::vec3 origin;
+    glm::vec3 dir;
+};
+
 class Camera
 {
 public:
@@ -14,14 +20,16 @@ public:
 
     void updateViewport(float width, float height);
     void update(float dt);
+    
+    void getMousePosInWorld(glm::vec3 &origin, glm::vec3 &dir);
 
     glm::mat4x4 projection;
     glm::mat4x4 view;
 
 private:
-    glm::vec3 position = {0, 8, 32};
+    glm::vec3 position = {0, 8, 312};
     float pitch = 0;
-    float yaw = -1.57; // -1.57
+    float yaw = 0; // -1.57
 
     float moveSpeed = 96;
     float mouseSense = 0.3;
