@@ -32,6 +32,8 @@ ImVec4 clear_color = ImColor(114, 144, 154);
 
 void imgui_draw();
 
+bool animateNextFrame(int desiredFrameRate);
+
 int main()
 {
     /* Platform */
@@ -121,11 +123,11 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
+        if (!animateNextFrame(60)) continue;
+        
         double currTime = glfwGetTime();
         deltaTime = currTime - prevTime;
         prevTime = currTime;
-
-        //deltaTime = 1.0f / ImGui::GetIO().Framerate;
 
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
@@ -146,13 +148,7 @@ int main()
 //        
 //        bsp.renderFaces();
         
-//        glEnable(GL_POLYGON_OFFSET_FILL);
-//        glPolygonOffset(1.0, 1.0);
-        
-        glEnable(GL_CULL_FACE);
         tool.draw(camera);
-        
-//        glDisable(GL_POLYGON_OFFSET_FILL);
         
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
@@ -189,4 +185,29 @@ void imgui_draw()
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+bool animateNextFrame(int desiredFrameRate)
+{
+    static double lastTime = 0.0f;
+    double elapsedTime = 0.0;
+
+    // Get current time in seconds  (milliseconds * .001 = seconds)
+    double currentTime = glfwGetTime();// * 0.001;
+
+    // Get the elapsed time by subtracting the current time from the last time
+    elapsedTime = currentTime - lastTime;
+
+    // Check if the time since we last checked is over (1 second / framesPerSecond)
+    if( elapsedTime > (1.0 / desiredFrameRate) )
+    {
+        // Reset the last time
+        lastTime = currentTime;
+
+        // Return TRUE, to animate the next frame of animation
+        return true;
+    }
+
+    // We don't animate right now.
+    return false;
 }
