@@ -19,8 +19,6 @@ Camera::~Camera()
 
 }
 
-static int oldState = GLFW_RELEASE;
-
 void Camera::update(float dt)
 {
     if (isFirstFrame)
@@ -93,17 +91,6 @@ void Camera::update(float dt)
     position += velocity;
 
     view = glm::lookAt(position, position + forward, up);
-    
-    int newState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    if (newState == GLFW_RELEASE && oldState == GLFW_PRESS)
-    {
-        glm::vec3 origin = {0, 0, 0};
-        glm::vec3 dir = {0, 0, 0};
-        getMousePosInWorld(origin, dir);
-        
-        std::cout << glm::to_string(dir) << std::endl;
-    }
-    oldState = newState;
 }
 
 void Camera::updateViewport(float width, float height)

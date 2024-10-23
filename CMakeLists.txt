@@ -37,6 +37,10 @@ add_executable( ${PROJECT_NAME}
         src/Quake3Types.h
         src/Grid.cpp
         src/Grid.h
+        src/Cube.cpp
+        src/Cube.h
+        src/BrushTool.cpp
+        src/BrushTool.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)

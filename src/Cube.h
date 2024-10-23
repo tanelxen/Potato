@@ -1,25 +1,28 @@
 //
-//  Grid.hpp
+//  Cube.h
 //  TryOpenGL
 //
-//  Created by Fedor Artemenkov on 20.07.24.
+//  Created by Fedor Artemenkov on 21.10.24.
 //
 
 #pragma once
 
+#include <glm/glm.hpp>
 #include "Shader.h"
 #include "Camera.h"
 
-class Grid
+class Cube
 {
     unsigned int vbo;
+    unsigned int ibo;
     unsigned int vao;
     Shader shader;
     
 public:
-//    Grid();
-//    ~Grid();
-    
     void init();
     void draw(const Camera& camera) const;
+    
+    glm::vec3 position;
+    glm::vec3 scale;
 };
+

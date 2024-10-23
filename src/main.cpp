@@ -15,6 +15,7 @@
 
 #include "Quake3Bsp.h"
 #include "Grid.h"
+#include "BrushTool.h"
 
 #include <string>
 
@@ -75,8 +76,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Shader shader;
-    shader.init("assets/shaders/basic.glsl");
+//    Shader shader;
+//    shader.init("assets/shaders/basic.glsl");
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -89,15 +90,15 @@ int main()
 
     setImGuiStyle();
 
-    CQuake3BSP bsp;
-
-    if (!bsp.LoadBSP("assets/maps/level.bsp")) {
-        return 1;
-    }
-
-    bsp.GenerateTexture();
-    bsp.GenerateLightmap();
-    bsp.initBuffers();
+//    CQuake3BSP bsp;
+//
+//    if (!bsp.LoadBSP("assets/maps/level.bsp")) {
+//        return 1;
+//    }
+//
+//    bsp.GenerateTexture();
+//    bsp.GenerateLightmap();
+//    bsp.initBuffers();
 
     Camera camera(window);
 
@@ -106,12 +107,15 @@ int main()
 
     glfwSwapInterval(0);
     
-    shader.bind();
-    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
-    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
+//    shader.bind();
+//    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
+//    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
     
     Grid grid;
     grid.init();
+    
+    BrushTool tool = BrushTool(window, &camera);
+    tool.init();
 
     glFrontFace(GL_CCW);
 
@@ -129,16 +133,26 @@ int main()
         camera.updateViewport((float)width, (float)height);
         camera.update(deltaTime);
         
+        tool.update();
+        
         glViewport(0, 0, width, height);
         
         glClearColor(0.6, 0.8, 0.6, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.bind();
-        glm::mat4x4 mvp = camera.projection * camera.view;
-        shader.setUniformMatrix((const float*) &mvp, "MVP");
+//        shader.bind();
+//        glm::mat4x4 mvp = camera.projection * camera.view;
+//        shader.setUniformMatrix((const float*) &mvp, "MVP");
+//        
+//        bsp.renderFaces();
         
-        bsp.renderFaces();
+//        glEnable(GL_POLYGON_OFFSET_FILL);
+//        glPolygonOffset(1.0, 1.0);
+        
+        glEnable(GL_CULL_FACE);
+        tool.draw(camera);
+        
+//        glDisable(GL_POLYGON_OFFSET_FILL);
         
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);

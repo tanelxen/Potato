@@ -5,6 +5,7 @@
 //  Created by Fedor Artemenkov on 20.07.24.
 //
 
+#include <glad/glad.h>
 #include "Grid.h"
 
 void Grid::init()
