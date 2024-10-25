@@ -11,11 +11,22 @@
 
 void BrushTool::init()
 {
-    cube.init();
+    filledCube.init();
+    wiredCube.init();
 }
 
 static int oldMouseButtonState = GLFW_RELEASE;
 static float gridSize = 8;
+
+glm::vec3 startPoint;
+glm::vec3 startPoint2;
+
+Plane plane = {.normal = {0, 1, 0}, .distance = 0};
+
+glm::vec3 cubePosition;
+glm::vec3 cubeScale;
+
+bool intersection(const Ray &ray, const Plane& plane, glm::vec3 &point);
 
 void BrushTool::update()
 {
@@ -27,8 +38,10 @@ void BrushTool::update()
     bool isPress = newMouseButtonState == GLFW_PRESS;
     oldMouseButtonState = newMouseButtonState;
     
+    Ray ray = camera->getMousePosInWorld();
+    
     glm::vec3 point;
-    if (!intersection(point)) return;
+    if (!intersection(ray, plane, point)) return;
     
     point = floor(point / gridSize) * gridSize;
     
@@ -36,8 +49,8 @@ void BrushTool::update()
     {
         if (isClick)
         {
-            cube.position = point;
-            cube.scale = {8, 0, 8};
+            cubePosition = point;
+            cubeScale = {8, 0, 8};
             
             startPoint = point;
             state = DrawingState::MAKE_PLANE;
@@ -45,54 +58,66 @@ void BrushTool::update()
     }
     else if (state == DrawingState::MAKE_PLANE)
     {
-        float x = fmin(startPoint.x, point.x);
-//        float y = min(startPoint.y, point.y);
-        float z = fmin(startPoint.z, point.z);
+        cubePosition.x = fmin(startPoint.x, point.x);
+        cubePosition.y = 0;
+        cubePosition.z = fmin(startPoint.z, point.z);
         
-        float width = abs(startPoint.x - point.x) + gridSize;
-        float depth = abs(startPoint.z - point.z) + gridSize;
-        
-        cube.position = {x, 0, z};
-        cube.scale = {width, 0, depth};
+        cubeScale.x = abs(startPoint.x - point.x) + gridSize;
+        cubeScale.y = 0;
+        cubeScale.z = abs(startPoint.z - point.z) + gridSize;
         
         if (isClick)
         {
-            cube.scale.y = gridSize;
+            startPoint2 = point;
             state = DrawingState::MAKE_CUBE;
         }
     }
     else if (state == DrawingState::MAKE_CUBE)
     {
+        glm::vec3 normal = camera->getForward();
+        float distance = glm::dot(normal, startPoint2);
+        Plane plane2 = {.normal = normal, .distance = distance};
+        
+        if (!intersection(ray, plane2, point)) return;
+        
+        point = floor(point / gridSize) * gridSize;
+        
+        cubePosition.y = fmin(startPoint2.y, point.y);
+        cubeScale.y = abs(startPoint2.y - point.y) + gridSize;
+        
         if (isClick)
         {
             state = DrawingState::IDLE;
         }
     }
+    
+    filledCube.position = cubePosition;
+    filledCube.scale = cubeScale;
+    
+    wiredCube.position = cubePosition;
+    wiredCube.scale = cubeScale;
 }
 
 void BrushTool::draw(const Camera &camera) const
 {
-    cube.draw(camera);
+    if (state != DrawingState::IDLE)
+    {
+        wiredCube.draw(camera);
+//        filledCube.draw(camera);
+    }
 }
 
-bool BrushTool::intersection(glm::vec3 &point)
+bool intersection(const Ray &ray, const Plane& plane, glm::vec3 &point)
 {
-    glm::vec3 planeNormal = {0, 1, 0};
-    float planeDist = 0.0f;
-    
-    glm::vec3 rayOrigin;
-    glm::vec3 rayDir;
-    camera->getMousePosInWorld(rayOrigin, rayDir);
-    
-    float dotProduct = glm::dot(rayDir, planeNormal);
+    float dotProduct = glm::dot(ray.dir, plane.normal);
     
     if (abs(dotProduct) < 0.000001) return false;
     
-    float t = (planeDist - glm::dot(rayOrigin, planeNormal)) / dotProduct;
+    float t = (plane.distance - glm::dot(ray.origin, plane.normal)) / dotProduct;
     
     if (t > 0)
     {
-        point = rayOrigin + rayDir * t;
+        point = ray.origin + ray.dir * t;
         return true;
     }
     

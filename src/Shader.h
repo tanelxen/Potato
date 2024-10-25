@@ -26,6 +26,7 @@ public:
     void unbind() const;
 
     void setUniformMatrix(const float* data, const char* name) const;
+    void setUniformVector4(const float* data, const char* name) const;
 
 //private:
     int program;

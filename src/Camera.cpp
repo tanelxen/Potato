@@ -100,7 +100,7 @@ void Camera::updateViewport(float width, float height)
     projection = glm::perspective(fov, ratio, 0.1f, 4096.0f);
 }
 
-void Camera::getMousePosInWorld(glm::vec3 &origin, glm::vec3 &dir)
+Ray Camera::getMousePosInWorld() const
 {
     double mouseX = 0;
     double mouseY = 0;
@@ -124,8 +124,10 @@ void Camera::getMousePosInWorld(glm::vec3 &origin, glm::vec3 &dir)
     nearWorld /= nearWorld.w;
     farWorld /= farWorld.w;
     
-    origin = glm::vec3(nearWorld);
+    glm::vec3 origin = glm::vec3(nearWorld);
     
-    dir = glm::vec3(farWorld - nearWorld);
+    glm::vec3 dir = glm::vec3(farWorld - nearWorld);
     dir = glm::normalize(dir);
+    
+    return {.origin = origin, .dir = dir};
 }

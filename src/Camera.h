@@ -12,6 +12,12 @@ struct Ray
     glm::vec3 dir;
 };
 
+struct Plane
+{
+    glm::vec3 normal;
+    float distance;
+};
+
 class Camera
 {
 public:
@@ -21,7 +27,9 @@ public:
     void updateViewport(float width, float height);
     void update(float dt);
     
-    void getMousePosInWorld(glm::vec3 &origin, glm::vec3 &dir);
+    Ray getMousePosInWorld() const;
+    
+    glm::vec3 getForward() const { return forward; }
 
     glm::mat4x4 projection;
     glm::mat4x4 view;

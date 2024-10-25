@@ -75,6 +75,19 @@ void Shader::setUniformMatrix(const float *data, const char *name) const
     glUniformMatrix4fv(location, 1, GL_FALSE, data);
 }
 
+void Shader::setUniformVector4(const float *data, const char *name) const
+{
+    const GLint location = glGetUniformLocation(program, name);
+
+    if (location == -1)
+    {
+        printf("Shader have no uniform %s\n", name);
+        return;
+    }
+
+    glUniform4fv(location, 1, data);
+}
+
 void Shader::init(const char *filepath)
 {
     enum ShaderSourceType {

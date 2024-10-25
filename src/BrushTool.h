@@ -29,9 +29,8 @@ private:
     GLFWwindow* window;
     Camera* camera;
     
-    Cube cube;
-    
-    glm::vec3 startPoint;
+    WiredCube wiredCube;
+    Cube filledCube;
     
     enum class DrawingState {
         IDLE,
@@ -40,7 +39,4 @@ private:
     };
     
     DrawingState state = DrawingState::IDLE;
-    
-private:
-    bool intersection(glm::vec3 &point);
 };

@@ -12,10 +12,12 @@ void main()
 #shader fragment
 #version 410 core
 
+uniform vec4 color;
+
 //final color
 out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(0.5, 0, 0.5, 1);
+    FragColor = color;
 }

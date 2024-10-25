@@ -26,3 +26,17 @@ public:
     glm::vec3 scale;
 };
 
+class WiredCube
+{
+    unsigned int vbo;
+    unsigned int ibo;
+    unsigned int vao;
+    Shader shader;
+    
+public:
+    void init();
+    void draw(const Camera& camera) const;
+    
+    glm::vec3 position;
+    glm::vec3 scale;
+};
