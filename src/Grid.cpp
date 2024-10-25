@@ -6,6 +6,7 @@
 //
 
 #include <glad/glad.h>
+#include "Camera.h"
 #include "Grid.h"
 
 void Grid::init()

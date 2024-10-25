@@ -8,7 +8,8 @@
 #pragma once
 
 #include "Shader.h"
-#include "Camera.h"
+
+class Camera;
 
 class Grid
 {

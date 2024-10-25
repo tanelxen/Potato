@@ -12,12 +12,13 @@
 
 class GLFWwindow;
 class Camera;
+class World;
 
 class BrushTool
 {
 public:
-    BrushTool(GLFWwindow* window, Camera* camera)
-    : window(window), camera(camera)
+    BrushTool(GLFWwindow* window, Camera* camera, World* world)
+    : window(window), camera(camera), world(world)
     { };
     
     void init();
@@ -28,9 +29,9 @@ public:
 private:
     GLFWwindow* window;
     Camera* camera;
+    World* world;
     
     WiredCube wiredCube;
-    Cube filledCube;
     
     enum class DrawingState {
         IDLE,

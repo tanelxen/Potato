@@ -1,8 +1,6 @@
 #pragma once
 
-//#include <cstring>
 #include <unordered_map>
-//#include <string>
 #include <vector>
 #include <glad/glad.h>
 #include "Quake3Types.h"

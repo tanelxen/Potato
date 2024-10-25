@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(TryOpenGL)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
 
@@ -41,6 +41,8 @@ add_executable( ${PROJECT_NAME}
         src/Cube.h
         src/BrushTool.cpp
         src/BrushTool.h
+        src/World.cpp
+        src/World.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)

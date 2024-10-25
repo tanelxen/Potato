@@ -9,9 +9,31 @@
 
 #include <glm/glm.hpp>
 #include "Shader.h"
-#include "Camera.h"
+
+class Camera;
 
 class Cube
+{
+    unsigned int vbo;
+    unsigned int ibo;
+    unsigned int vao;
+    Shader shader;
+    
+public:
+    void init();
+    void draw(const Camera& camera) const;
+    
+    Cube() = default;
+    ~Cube();
+    
+    Cube(Cube&& other) noexcept = default;
+    Cube& operator=(Cube&& other) noexcept = default;
+    
+    glm::vec3 position;
+    glm::vec3 scale;
+};
+
+class WiredCube
 {
     unsigned int vbo;
     unsigned int ibo;
@@ -26,9 +48,10 @@ public:
     glm::vec3 scale;
 };
 
-class WiredCube
+class ShadedCube
 {
-    unsigned int vbo;
+    unsigned int pbo;
+    unsigned int nbo;
     unsigned int ibo;
     unsigned int vao;
     Shader shader;

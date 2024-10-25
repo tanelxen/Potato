@@ -15,6 +15,7 @@
 
 #include "Quake3Bsp.h"
 #include "Grid.h"
+#include "World.h"
 #include "BrushTool.h"
 
 #include <string>
@@ -116,7 +117,9 @@ int main()
     Grid grid;
     grid.init();
     
-    BrushTool tool = BrushTool(window, &camera);
+    World world;
+    
+    BrushTool tool = BrushTool(window, &camera, &world);
     tool.init();
 
     glFrontFace(GL_CCW);
@@ -149,9 +152,9 @@ int main()
 //        bsp.renderFaces();
         
         tool.draw(camera);
+        world.draw(camera);
         
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
+        glDisable(GL_CULL_FACE);
         grid.draw(camera);
 
         imgui_draw();

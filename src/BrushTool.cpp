@@ -8,10 +8,10 @@
 #include <GLFW/glfw3.h>
 #include "BrushTool.h"
 #include "Camera.h"
+#include "World.h"
 
 void BrushTool::init()
 {
-    filledCube.init();
     wiredCube.init();
 }
 
@@ -35,7 +35,6 @@ void BrushTool::update()
     
     int newMouseButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
     bool isClick = (newMouseButtonState == GLFW_RELEASE && oldMouseButtonState == GLFW_PRESS);
-    bool isPress = newMouseButtonState == GLFW_PRESS;
     oldMouseButtonState = newMouseButtonState;
     
     Ray ray = camera->getMousePosInWorld();
@@ -88,11 +87,13 @@ void BrushTool::update()
         if (isClick)
         {
             state = DrawingState::IDLE;
+            
+            if (world != nullptr)
+            {
+                world->addCube(cubePosition, cubeScale);
+            }
         }
     }
-    
-    filledCube.position = cubePosition;
-    filledCube.scale = cubeScale;
     
     wiredCube.position = cubePosition;
     wiredCube.scale = cubeScale;
@@ -103,7 +104,6 @@ void BrushTool::draw(const Camera &camera) const
     if (state != DrawingState::IDLE)
     {
         wiredCube.draw(camera);
-//        filledCube.draw(camera);
     }
 }
 
