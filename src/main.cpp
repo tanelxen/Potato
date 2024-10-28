@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <sstream>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -25,9 +26,7 @@
 #include "BrushTool.h"
 #include "CubeGeometry.h"
 
-extern "C" {
-#include "KeyValueParser.h"
-}
+#include "KeyValueCollection.h"
 
 static void error_callback(int e, const char *d) { printf("Error %d: %s\n", e, d); }
 
@@ -96,45 +95,47 @@ int main()
             return 1;
         }
         
-        parse_entities(bsp.m_pEntities);
-        entity_field *spawn = entity_by_classname("info_player_deathmatch");
+        KeyValueCollection entities;
+        entities.initFromString(bsp.m_pEntities);
         
-        if (spawn != nullptr)
+        auto spawnPoints = entities.getAllWithKeyValue("classname", "info_player_deathmatch");
+        
+        if (spawnPoints.size() > 0)
         {
-            char* angle;
-            char* origin;
+            auto first = spawnPoints[2];
             
-            angle = entity_get(spawn, "angle");
-            if (angle) {
-//                camera_angle[0] = radians(atoi(angle));
-                int value = atoi(angle);
+            auto angleProperty = first.properties.find("angle");
+            
+            if (angleProperty != first.properties.end())
+            {
+                std::string valueStr = angleProperty->second;
+                int value = atoi(valueStr.c_str());
+                
                 printf("angle = %i\n", value);
                 
-                camera.yaw = value * 3.14f / 180.0f;
+                camera.yaw = (-value) * 3.14f / 180.0f;
+                camera.pitch = 0;
             }
             
-            camera.pitch = 0;
-
-            origin = entity_get(spawn, "origin");
+            auto originProperty = first.properties.find("origin");
             
-            glm::vec3 camera_pos = {0, 0, 0};
+            if (originProperty != first.properties.end())
+            {
+                std::string origin = originProperty->second;
+                
+                std::istringstream stream(origin);
 
-            for (int i = 0; origin && *origin && i < 3; ++i) {
-                camera_pos[i] = std::strtof(origin, &origin);
+                glm::vec3 camera_pos = {0, 0, 0};
+                stream >> camera_pos.x >> camera_pos.y >> camera_pos.z;
+                
+                camera.position.x = camera_pos.x;
+                camera.position.y = camera_pos.z;
+                camera.position.z = -camera_pos.y;
+                
+                printf("camera_pos = (%1.0f %1.0f %1.0f)\n", camera.position.x, camera.position.y, camera.position.z);
+                
+                camera.position.y += 60;
             }
-            
-            camera.position.x = camera_pos.x;
-            camera.position.y = camera_pos.z;
-            camera.position.z = -camera_pos.y;
-            
-            printf("camera_pos = (%1.0f %1.0f %1.0f)\n", camera.position.x, camera.position.y, camera.position.z);
-            
-            camera.position.y += 60;
-
-//            camera_pos[2] += 60;
-
-//            log_print(lninfo, "[%f %f %f] %f degrees",
-//                expand3(camera_pos), degrees(camera_angle[0]));
         }
         
 //        printf("num_entities = %i\n", num_entities);
