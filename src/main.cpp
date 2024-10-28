@@ -1,7 +1,11 @@
 #include <iostream>
+#include <string>
+#include <stdlib.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+//#include <glm/gtx/io.hpp>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -14,11 +18,16 @@
 #include "Camera.h"
 
 #include "Quake3Bsp.h"
+#include "BspScene.h"
+
 #include "Grid.h"
 #include "World.h"
 #include "BrushTool.h"
+#include "CubeGeometry.h"
 
-#include <string>
+extern "C" {
+#include "KeyValueParser.h"
+}
 
 static void error_callback(int e, const char *d) { printf("Error %d: %s\n", e, d); }
 
@@ -76,43 +85,71 @@ int main()
     
     const unsigned char* device = glGetString(GL_RENDERER);
     printf("device: %s\n", device);
-
-    glEnable(GL_DEPTH_TEST);
-
-//    Shader shader;
-//    shader.init("assets/shaders/basic.glsl");
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 150");
-
-    setImGuiStyle();
-
-//    CQuake3BSP bsp;
-//
-//    if (!bsp.LoadBSP("assets/maps/level.bsp")) {
-//        return 1;
-//    }
-//
-//    bsp.GenerateTexture();
-//    bsp.GenerateLightmap();
-//    bsp.initBuffers();
-
+    
+    BspScene scene;
     Camera camera(window);
+    
+    {
+        CQuake3BSP bsp;
+
+        if (!bsp.initFromFile("assets/maps/level.bsp")) {
+            return 1;
+        }
+        
+        parse_entities(bsp.m_pEntities);
+        entity_field *spawn = entity_by_classname("info_player_deathmatch");
+        
+        if (spawn != nullptr)
+        {
+            char* angle;
+            char* origin;
+            
+            angle = entity_get(spawn, "angle");
+            if (angle) {
+//                camera_angle[0] = radians(atoi(angle));
+                int value = atoi(angle);
+                printf("angle = %i\n", value);
+                
+                camera.yaw = value * 3.14f / 180.0f;
+            }
+            
+            camera.pitch = 0;
+
+            origin = entity_get(spawn, "origin");
+            
+            glm::vec3 camera_pos = {0, 0, 0};
+
+            for (int i = 0; origin && *origin && i < 3; ++i) {
+                camera_pos[i] = std::strtof(origin, &origin);
+            }
+            
+            camera.position.x = camera_pos.x;
+            camera.position.y = camera_pos.z;
+            camera.position.z = -camera_pos.y;
+            
+            printf("camera_pos = (%1.0f %1.0f %1.0f)\n", camera.position.x, camera.position.y, camera.position.z);
+            
+            camera.position.y += 60;
+
+//            camera_pos[2] += 60;
+
+//            log_print(lninfo, "[%f %f %f] %f degrees",
+//                expand3(camera_pos), degrees(camera_angle[0]));
+        }
+        
+//        printf("num_entities = %i\n", num_entities);
+        
+        scene.initFromBsp(&bsp);
+    }
+
+    
 
     double prevTime = 0;
     double deltaTime;
 
     glfwSwapInterval(0);
     
-//    shader.bind();
-//    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
-//    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
+    CubeGeometry::init();
     
     Grid grid;
     grid.init();
@@ -122,6 +159,7 @@ int main()
     BrushTool tool = BrushTool(window, &camera, &world);
     tool.init();
 
+    glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CCW);
 
     while (!glfwWindowShouldClose(window))
@@ -138,38 +176,50 @@ int main()
         camera.updateViewport((float)width, (float)height);
         camera.update(deltaTime);
         
-        tool.update();
+//        tool.update();
         
         glViewport(0, 0, width, height);
         
         glClearColor(0.1, 0.1, 0.1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//        shader.bind();
-//        glm::mat4x4 mvp = camera.projection * camera.view;
-//        shader.setUniformMatrix((const float*) &mvp, "MVP");
-//        
-//        bsp.renderFaces();
         
-        tool.draw(camera);
-        world.draw(camera);
+        scene.renderFaces(&camera);
         
-        glDisable(GL_CULL_FACE);
-        grid.draw(camera);
+//        tool.draw(camera);
+//        world.draw(camera);
+        
+//        glDisable(GL_CULL_FACE);
+//        grid.draw(camera);
 
-        imgui_draw();
+//        imgui_draw();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    
+    CubeGeometry::deinit();
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
+//    ImGui_ImplOpenGL3_Shutdown();
+//    ImGui_ImplGlfw_Shutdown();
 
     glfwDestroyWindow(window);
     glfwTerminate();
 
     return 0;
+}
+
+void imgui_init(GLFWwindow* window)
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 150");
+
+    setImGuiStyle();
 }
 
 void imgui_draw()

@@ -7,22 +7,20 @@
 
 #include "World.h"
 #include "Camera.h"
-#include "Cube.h"
+#include "CubeGeometry.h"
 
 void World::addCube(const glm::vec3& position, const glm::vec3& scale)
 {
-    ShadedCube& cube = brushes.emplace_back();
+    Brush& cube = brushes.emplace_back();
     
     cube.position = position;
     cube.scale = scale;
-    cube.init();
 }
 
 void World::draw(const Camera &camera) const
 {
-    for (const ShadedCube& brush : brushes)
+    for (const Brush& brush : brushes)
     {
-        brush.draw(camera);
+        CubeGeometry::draw(camera, brush.position, brush.scale);
     }
 }
-

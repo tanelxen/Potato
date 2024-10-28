@@ -33,12 +33,13 @@ public:
 
     glm::mat4x4 projection;
     glm::mat4x4 view;
-
-private:
+    
     glm::vec3 position = {0, 128, 256};
+    
     float pitch = -0.5;
     float yaw = -1.57;
 
+private:
     float moveSpeed = 96;
     float mouseSense = 0.3;
 

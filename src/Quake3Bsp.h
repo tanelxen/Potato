@@ -1,60 +1,29 @@
 #pragma once
 
-#include <unordered_map>
-#include <vector>
-#include <glad/glad.h>
 #include "Quake3Types.h"
 
-#define FACE_POLYGON 1
-#define MAX_TEXTURES 1000
-
-struct Surface
+struct CQuake3BSP
 {
-    GLuint texId;
-    uint32_t bufferOffset; // offset in bytes
-    uint32_t numVerts;
-};
-
-class CQuake3BSP
-{
-public:
     CQuake3BSP();
+    ~CQuake3BSP();
+    
+    bool initFromFile(const char* filename);
+    
+    char* m_pEntities;
+    int m_numEntities;
 
-    // This loads a .bsp file by it's file name (Returns true if successful)
-    bool LoadBSP(const char* filename);
-
-    void initBuffers();
-
-    void GenerateTexture();
-    void GenerateLightmap();
-    void renderFaces();
-
-private:
-    int m_numFaces;
     tBSPFace* m_pFaces;
+    int m_numFaces;
     
-    int m_numIndices;
     int* m_pIndices;
+    int m_numIndices;
     
-    int m_numVerts;
     tBSPVertex* m_pVerts;
+    int m_numVerts;
     
-    int m_numTextures;
-    int m_numLightmaps;
-    
-    GLuint m_textures[MAX_TEXTURES];
-    GLuint m_lightmaps[MAX_TEXTURES];
-
-    GLuint  missing_LM_id;
-    GLuint  missing_id;
-
     tBSPTexture*  pTextures;
-    tBSPLightmap* pLightmaps;
-
-    GLuint vao;
-    GLuint vbo;
-    GLuint ibo;
+    int m_numTextures;
     
-    std::vector<Surface> surfaces;
-    std::vector<unsigned int> indices;
+    tBSPLightmap* pLightmaps;
+    int m_numLightmaps;
 };

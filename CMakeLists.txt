@@ -43,6 +43,12 @@ add_executable( ${PROJECT_NAME}
         src/BrushTool.h
         src/World.cpp
         src/World.h
+        src/CubeGeometry.cpp
+        src/CubeGeometry.h
+        src/BspScene.cpp
+        src/BspScene.h
+        src/KeyValueParser.c
+        src/KeyValueParser.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)
