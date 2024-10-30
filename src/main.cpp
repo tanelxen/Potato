@@ -102,7 +102,7 @@ int main()
         
         if (spawnPoints.size() > 0)
         {
-            auto first = spawnPoints[2];
+            auto first = spawnPoints[0];
             
             auto angleProperty = first.properties.find("angle");
             

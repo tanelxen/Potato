@@ -19,22 +19,84 @@
 #include "Quake3Bsp.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "TextureAtlas.h"
+
+
+#define FACE_POLYGON 1
 
 static CQuake3BSP* g_bsp = nullptr;
 static Shader shader;
+
+static void adjastLightmapCoords(CQuake3BSP* bsp, const TextureAtlas& atlas);
+static GLuint generateLightmap(const TextureAtlas& atlas);
 
 void BspScene::initFromBsp(CQuake3BSP* bsp)
 {
     g_bsp = bsp;
     
+    TextureAtlas atlas;
+    atlas.initFromQ3Lightmaps(bsp->pLightmaps, bsp->m_numLightmaps);
+//    g_atlas.saveToPng("lightmap.png");
+    
+    adjastLightmapCoords(bsp, atlas);
+    m_lightmap = generateLightmap(atlas);
+    
     GenerateTexture();
-    GenerateLightmap();
     initBuffers();
+}
+
+void adjastLightmapCoords(CQuake3BSP* bsp, const TextureAtlas& atlas)
+{
+    std::unordered_map<int, bool> processedVertices;
+    
+    for (int i = 0; i < bsp->m_numFaces; ++i)
+    {
+        const tBSPFace &face = bsp->m_pFaces[i];
+        
+        if (face.type != FACE_POLYGON) continue;
+        if (face.lightmapID == -1) continue;
+        
+        const TextureTile &tile = atlas.tiles[face.lightmapID];
+        
+        for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
+        {
+            unsigned int index = bsp->m_pIndices[j] + face.startVertIndex;
+            
+            if (processedVertices[index]) {
+                continue;
+            }
+            
+            tBSPVertex &vertex = bsp->m_pVerts[index];
+            
+            vertex.vLightmapCoord.x = (vertex.vLightmapCoord.x * tile.width + tile.x) / atlas.width;
+            vertex.vLightmapCoord.y = (vertex.vLightmapCoord.y * tile.height + tile.y) / atlas.height;
+            
+            processedVertices[index] = true;
+        }
+    }
+}
+
+GLuint generateLightmap(const TextureAtlas& atlas)
+{
+    GLuint id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, atlas.width, atlas.height, 0, GL_RGB, GL_UNSIGNED_BYTE, atlas.buffer);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    return id;
 }
 
 void BspScene::GenerateTexture()
 {
-    // GLfloat aniso = 8.0;
     GLuint textureID;
     int    width, height;
     int    num_channels = 3;
@@ -105,54 +167,10 @@ void BspScene::GenerateTexture()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void BspScene::GenerateLightmap()
-{
-    // GLfloat aniso = 8.0f;
-
-    // generate missing lightmap
-    GLfloat white_lightmap[] =
-        {1.0f, 1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f, 1.0f};
-
-    glGenTextures(1, &missing_LM_id);
-    glBindTexture(GL_TEXTURE_2D, missing_LM_id);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2, 2, 0, GL_RGB, GL_FLOAT, &white_lightmap);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    for (GLuint i = 0; i < g_bsp->m_numLightmaps; i++)
-    {
-        GLuint lmId = 0;
-        glGenTextures(1, &lmId);
-        glBindTexture(GL_TEXTURE_2D, lmId);
-        // glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &aniso);
-        // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, &g_bsp->pLightmaps[i]);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        m_lightmaps[i] = lmId;
-    }
-}
-
 #define VERT_POSITION_LOC 0
 #define VERT_DIFFUSE_TEX_COORD_LOC 1
 #define VERT_LIGHTMAP_TEX_COORD_LOC 2
 #define VERT_NORMAL_LOC 3
-
-#define FACE_POLYGON 1
 
 void BspScene::initBuffers()
 {
@@ -160,14 +178,13 @@ void BspScene::initBuffers()
     
     for (int i = 0; i < g_bsp->m_numFaces; ++i)
     {
-        tBSPFace &face = g_bsp->m_pFaces[i];
+        const tBSPFace &face = g_bsp->m_pFaces[i];
         
         if (face.type != FACE_POLYGON) continue;
         
         for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
         {
             unsigned int index = g_bsp->m_pIndices[j] + face.startVertIndex;
-            
             indicesByTexture[face.textureID].push_back(index);
         }
     }
@@ -211,7 +228,7 @@ void BspScene::initBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
-    shader.init("assets/shaders/basic.glsl");
+    shader.init("assets/shaders/q3bsp.glsl");
 }
 
 void BspScene::renderFaces(Camera* camera)
@@ -228,6 +245,9 @@ void BspScene::renderFaces(Camera* camera)
     
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_lightmap);
     
     for (auto surface : surfaces)
     {

@@ -30,10 +30,14 @@ uniform sampler2D s_bspLightmap;
 //final color
 out vec4 FragColor;
 
+vec4 adjustExposure(vec4 color, float value) {
+    return (1.0 + value) * color;
+}
+
 void main()
 {
     vec4 o_texture  = texture(s_bspTexture,  g_TexCoord);
-    vec4 o_lightmap = texture(s_bspLightmap, g_LmapCoord);
+    vec4 o_lightmap = texture(s_bspLightmap, g_LmapCoord) + 0.2;
 
-    FragColor = o_texture;// vec4(0.5, 0, 0.5, 1);
+    FragColor = adjustExposure(o_texture * o_lightmap, 2);
 }

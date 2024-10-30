@@ -21,7 +21,7 @@ struct CQuake3BSP
     tBSPVertex* m_pVerts;
     int m_numVerts;
     
-    tBSPTexture*  pTextures;
+    tBSPTexture* pTextures;
     int m_numTextures;
     
     tBSPLightmap* pLightmaps;

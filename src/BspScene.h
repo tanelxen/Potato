@@ -30,16 +30,14 @@ public:
 private:
     void initBuffers();
     void GenerateTexture();
-    void GenerateLightmap();
     
     unsigned int vao;
     unsigned int vbo;
     unsigned int ibo;
     
     unsigned int m_textures[MAX_TEXTURES];
-    unsigned int m_lightmaps[MAX_TEXTURES];
+    unsigned int m_lightmap;
 
-    unsigned int missing_LM_id;
     unsigned int missing_id;
     
     std::vector<Surface> surfaces;
