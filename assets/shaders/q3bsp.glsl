@@ -37,7 +37,7 @@ vec4 adjustExposure(vec4 color, float value) {
 void main()
 {
     vec4 o_texture  = texture(s_bspTexture,  g_TexCoord);
-    vec4 o_lightmap = texture(s_bspLightmap, g_LmapCoord) + 0.2;
+    vec4 o_lightmap = texture(s_bspLightmap, g_LmapCoord) + 0.1;
 
     FragColor = adjustExposure(o_texture * o_lightmap, 2);
 }

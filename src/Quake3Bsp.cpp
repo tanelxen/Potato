@@ -31,7 +31,7 @@ enum eLumps {
     kMaxLumps      // A constant to store the number of lumps
 };
 
-bool CQuake3BSP::initFromFile(const char* filename)
+bool Quake3BSP::initFromFile(const char* filename)
 {
     if (!filename) {
         printf("ERROR:: You must specify BSP file as parameter");
@@ -99,7 +99,7 @@ bool CQuake3BSP::initFromFile(const char* filename)
     return (fp);
 }
 
-CQuake3BSP::CQuake3BSP()
+Quake3BSP::Quake3BSP()
 {
     m_numEntities = 0;
     m_numVerts = 0;
@@ -116,7 +116,7 @@ CQuake3BSP::CQuake3BSP()
     pLightmaps = nullptr;
 }
 
-CQuake3BSP::~CQuake3BSP()
+Quake3BSP::~Quake3BSP()
 {
     delete[] m_pEntities;
     delete[] m_pVerts;

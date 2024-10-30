@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include <sstream>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -14,19 +13,15 @@
 
 #include "imguiStyling.h"
 
-#include "VertexBuffer.h"
 #include "Shader.h"
 #include "Camera.h"
-
-#include "Quake3Bsp.h"
-#include "BspScene.h"
 
 #include "Grid.h"
 #include "World.h"
 #include "BrushTool.h"
 #include "CubeGeometry.h"
 
-#include "KeyValueCollection.h"
+#include "Q3MapScene.h"
 
 static void error_callback(int e, const char *d) { printf("Error %d: %s\n", e, d); }
 
@@ -39,6 +34,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 ImVec4 clear_color = ImColor(114, 144, 154);
 
+void imgui_init(GLFWwindow* window);
 void imgui_draw();
 
 bool animateNextFrame(int desiredFrameRate);
@@ -85,65 +81,12 @@ int main()
     const unsigned char* device = glGetString(GL_RENDERER);
     printf("device: %s\n", device);
     
-    BspScene scene;
+//    imgui_init(window);
+    
     Camera camera(window);
     
-    {
-        CQuake3BSP bsp;
-
-        if (!bsp.initFromFile("assets/maps/level.bsp")) {
-            return 1;
-        }
-        
-        KeyValueCollection entities;
-        entities.initFromString(bsp.m_pEntities);
-        
-        auto spawnPoints = entities.getAllWithKeyValue("classname", "info_player_deathmatch");
-        
-        if (spawnPoints.size() > 0)
-        {
-            auto first = spawnPoints[0];
-            
-            auto angleProperty = first.properties.find("angle");
-            
-            if (angleProperty != first.properties.end())
-            {
-                std::string valueStr = angleProperty->second;
-                int value = atoi(valueStr.c_str());
-                
-                printf("angle = %i\n", value);
-                
-                camera.yaw = (-value) * 3.14f / 180.0f;
-                camera.pitch = 0;
-            }
-            
-            auto originProperty = first.properties.find("origin");
-            
-            if (originProperty != first.properties.end())
-            {
-                std::string origin = originProperty->second;
-                
-                std::istringstream stream(origin);
-
-                glm::vec3 camera_pos = {0, 0, 0};
-                stream >> camera_pos.x >> camera_pos.y >> camera_pos.z;
-                
-                camera.position.x = camera_pos.x;
-                camera.position.y = camera_pos.z;
-                camera.position.z = -camera_pos.y;
-                
-                printf("camera_pos = (%1.0f %1.0f %1.0f)\n", camera.position.x, camera.position.y, camera.position.z);
-                
-                camera.position.y += 60;
-            }
-        }
-        
-//        printf("num_entities = %i\n", num_entities);
-        
-        scene.initFromBsp(&bsp);
-    }
-
-    
+    Q3MapScene scene(&camera);
+    scene.loadMap("assets/maps/level.bsp");
 
     double prevTime = 0;
     double deltaTime;
@@ -175,7 +118,7 @@ int main()
         glfwGetFramebufferSize(window, &width, &height);
 
         camera.updateViewport((float)width, (float)height);
-        camera.update(deltaTime);
+        scene.update(deltaTime);
         
 //        tool.update();
         
@@ -184,13 +127,13 @@ int main()
         glClearColor(0.1, 0.1, 0.1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        scene.renderFaces(&camera);
-        
 //        tool.draw(camera);
 //        world.draw(camera);
         
 //        glDisable(GL_CULL_FACE);
 //        grid.draw(camera);
+        
+        scene.draw();
 
 //        imgui_draw();
 

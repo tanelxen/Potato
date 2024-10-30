@@ -10,12 +10,16 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <glm/glm.hpp>
 
 class KeyValueEntry
 {
 public:
     void debugPrint() const;
     std::unordered_map<std::string, std::string> properties;
+    
+    bool getIntValue(const std::string &name, int &value);
+    bool getVec3Value(const std::string &name, glm::vec3 &value);
 };
 
 class KeyValueCollection

@@ -2,10 +2,10 @@
 
 #include "Quake3Types.h"
 
-struct CQuake3BSP
+struct Quake3BSP
 {
-    CQuake3BSP();
-    ~CQuake3BSP();
+    Quake3BSP();
+    ~Quake3BSP();
     
     bool initFromFile(const char* filename);
     

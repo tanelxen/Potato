@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "BspScene.h"
+#include "Q3BspMesh.h"
 #include "Quake3Bsp.h"
 #include "Camera.h"
 #include "Shader.h"
@@ -24,13 +24,13 @@
 
 #define FACE_POLYGON 1
 
-static CQuake3BSP* g_bsp = nullptr;
+static Quake3BSP* g_bsp = nullptr;
 static Shader shader;
 
-static void adjastLightmapCoords(CQuake3BSP* bsp, const TextureAtlas& atlas);
+static void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas);
 static GLuint generateLightmap(const TextureAtlas& atlas);
 
-void BspScene::initFromBsp(CQuake3BSP* bsp)
+void Q3BspMesh::initFromBsp(Quake3BSP* bsp)
 {
     g_bsp = bsp;
     
@@ -43,9 +43,11 @@ void BspScene::initFromBsp(CQuake3BSP* bsp)
     
     GenerateTexture();
     initBuffers();
+    
+    g_bsp = nullptr;
 }
 
-void adjastLightmapCoords(CQuake3BSP* bsp, const TextureAtlas& atlas)
+void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas)
 {
     std::unordered_map<int, bool> processedVertices;
     
@@ -95,7 +97,7 @@ GLuint generateLightmap(const TextureAtlas& atlas)
     return id;
 }
 
-void BspScene::GenerateTexture()
+void Q3BspMesh::GenerateTexture()
 {
     GLuint textureID;
     int    width, height;
@@ -172,7 +174,7 @@ void BspScene::GenerateTexture()
 #define VERT_LIGHTMAP_TEX_COORD_LOC 2
 #define VERT_NORMAL_LOC 3
 
-void BspScene::initBuffers()
+void Q3BspMesh::initBuffers()
 {
     std::unordered_map<int, std::vector<int>> indicesByTexture;
     
@@ -229,15 +231,17 @@ void BspScene::initBuffers()
     glBindVertexArray(0);
     
     shader.init("assets/shaders/q3bsp.glsl");
-}
-
-void BspScene::renderFaces(Camera* camera)
-{
+    
     shader.bind();
     glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
     glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
     
-    glm::mat4x4 mvp = camera->projection * camera->view;
+    shader.unbind();
+}
+
+void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
+{
+    shader.bind();
     shader.setUniformMatrix((const float*) &mvp, "MVP");
     
     glBindVertexArray(vao);

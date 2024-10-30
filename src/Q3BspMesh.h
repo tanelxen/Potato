@@ -8,6 +8,7 @@
 #pragma once
 
 #include <vector>
+#include <glm/glm.hpp>
 
 #define MAX_TEXTURES 1000
 
@@ -18,14 +19,13 @@ struct Surface
     unsigned int numVerts;
 };
 
-class Camera;
-class CQuake3BSP;
+class Quake3BSP;
 
-class BspScene
+class Q3BspMesh
 {
 public:
-    void initFromBsp(CQuake3BSP* bsp);
-    void renderFaces(Camera* camera);
+    void initFromBsp(Quake3BSP* bsp);
+    void renderFaces(glm::mat4x4& mvp);
     
 private:
     void initBuffers();

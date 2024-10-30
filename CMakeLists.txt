@@ -24,10 +24,9 @@ add_executable( ${PROJECT_NAME}
         vendor/imgui/backends/imgui_impl_glfw.cpp
         vendor/imgui/backends/imgui_impl_opengl3.cpp
         vendor/stb_image.h
+        vendor/stb_image_write.h
 
         src/imguiStyling.cpp
-        src/VertexBuffer.h
-        src/VertexBuffer.cpp
         src/Shader.cpp
         src/Shader.h
         src/Camera.cpp
@@ -45,10 +44,14 @@ add_executable( ${PROJECT_NAME}
         src/World.h
         src/CubeGeometry.cpp
         src/CubeGeometry.h
-        src/BspScene.cpp
-        src/BspScene.h
-        src/KeyValueParser.c
-        src/KeyValueParser.h
+        src/Q3BspMesh.cpp
+        src/Q3BspMesh.h
+        src/KeyValueCollection.cpp
+        src/KeyValueCollection.h
+        src/TextureAtlas.cpp
+        src/TextureAtlas.h
+        src/Q3MapScene.cpp
+        src/Q3MapScene.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)

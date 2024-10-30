@@ -7,6 +7,7 @@
 
 #include "KeyValueCollection.h"
 #include <iostream>
+#include <sstream>
 
 void KeyValueCollection::initFromString(const std::string &input)
 {
@@ -72,6 +73,32 @@ void KeyValueEntry::debugPrint() const
         std::cout << "  " << key << ": \"" << value << "\"\n";
     }
     std::cout << "}\n";
+}
+
+bool KeyValueEntry::getIntValue(const std::string &name, int &value)
+{
+    auto property = properties.find(name);
+    
+    if (property == properties.end()) return false;
+    
+    std::string valueStr = property->second;
+    value = atoi(valueStr.c_str());
+    
+    return true;
+}
+
+bool KeyValueEntry::getVec3Value(const std::string &name, glm::vec3 &value)
+{
+    auto property = properties.find(name);
+    
+    if (property == properties.end()) return false;
+    
+    std::string valueStr = property->second;
+    
+    std::istringstream stream(valueStr);
+    stream >> value.x >> value.y >> value.z;
+    
+    return true;
 }
 
 std::vector<KeyValueEntry> KeyValueCollection::getAllWithKeyValue(const std::string &key, const std::string &value)
