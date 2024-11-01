@@ -4,7 +4,6 @@
 
 #pragma once
 #include <glm/glm.hpp>
-#include <GLFW/glfw3.h>
 
 struct Ray
 {
@@ -17,6 +16,8 @@ struct Plane
     glm::vec3 normal;
     float distance;
 };
+
+class GLFWwindow;
 
 class Camera
 {

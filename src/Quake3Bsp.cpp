@@ -1,14 +1,6 @@
 
 #include "Quake3Bsp.h"
 
-#include <algorithm> // std::sort
-#include <cstring>   // GCC7 fix
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
-
 // This is our lumps enumeration
 enum eLumps {
     kEntities = 0, // Stores player/object positions, etc...
@@ -94,6 +86,65 @@ bool Quake3BSP::initFromFile(const char* filename)
     pLightmaps = new tBSPLightmap[m_numLightmaps];
     fseek(fp, lumps[kLightmaps].offset, SEEK_SET);
     fread(pLightmaps, m_numLightmaps, sizeof(tBSPLightmap), fp);
+    
+    // Nodes
+    m_numOfNodes = lumps[kNodes].length / sizeof(tBSPNode);
+    m_pNodes     = new tBSPNode [m_numOfNodes];
+    fseek(fp, lumps[kNodes].offset, SEEK_SET);
+    fread(m_pNodes, m_numOfNodes, sizeof(tBSPNode), fp);
+
+    // Leafs
+    m_numOfLeafs = lumps[kLeafs].length / sizeof(tBSPLeaf);
+    m_pLeafs     = new tBSPLeaf [m_numOfLeafs];
+    fseek(fp, lumps[kLeafs].offset, SEEK_SET);
+    fread(m_pLeafs, m_numOfLeafs, sizeof(tBSPLeaf), fp);
+    
+//    // Now we need to go through and convert all the leaf bounding boxes
+//    // to the normal OpenGL Y up axis.
+//    for(int i = 0; i < m_numOfLeafs; i++)
+//    {
+//        // Swap the min y and z values, then negate the new Z
+//        int temp = m_pLeafs[i].mins.y;
+//        m_pLeafs[i].mins[2] = m_pLeafs[i].mins[3];
+//        m_pLeafs[i].mins[3] = -temp;
+//        
+//        // Swap the max y and z values, then negate the new Z
+//        temp = m_pLeafs[i].maxs.y;
+//        m_pLeafs[i].maxs[2] = m_pLeafs[i].maxs[3];
+//        m_pLeafs[i].maxs[3] = -temp;
+//    }
+    
+    // Planes
+    m_numOfPlanes = lumps[kPlanes].length / sizeof(tBSPPlane);
+    m_pPlanes     = new tBSPPlane [m_numOfPlanes];
+    fseek(fp, lumps[kPlanes].offset, SEEK_SET);
+    fread(m_pPlanes, m_numOfPlanes, sizeof(tBSPPlane), fp);
+    
+    // Go through every plane and convert it's normal to the Y-axis being up
+    for(int i = 0; i < m_numOfPlanes; i++)
+    {
+        float temp = m_pPlanes[i].normal.y;
+        m_pPlanes[i].normal.y = m_pPlanes[i].normal.z;
+        m_pPlanes[i].normal.z = -temp;
+    }
+    
+    // Brushes
+    m_numOfBrushes = lumps[kBrushes].length / sizeof(int);
+    m_pBrushes     = new tBSPBrush [m_numOfBrushes];
+    fseek(fp, lumps[kBrushes].offset, SEEK_SET);
+    fread(m_pBrushes, m_numOfBrushes, sizeof(tBSPBrush), fp);
+    
+    // Brush sides
+    m_numOfBrushSides = lumps[kBrushSides].length / sizeof(int);
+    m_pBrushSides     = new tBSPBrushSide [m_numOfBrushSides];
+    fseek(fp, lumps[kBrushSides].offset, SEEK_SET);
+    fread(m_pBrushSides, m_numOfBrushSides, sizeof(tBSPBrushSide), fp);
+    
+    // Leaf brushes
+    m_numOfLeafBrushes = lumps[kLeafBrushes].length / sizeof(int);
+    m_pLeafBrushes     = new int [m_numOfLeafBrushes];
+    fseek(fp, lumps[kLeafBrushes].offset, SEEK_SET);
+    fread(m_pLeafBrushes, m_numOfLeafBrushes, sizeof(int), fp);
 
     fclose(fp);
     return (fp);
@@ -107,6 +158,12 @@ Quake3BSP::Quake3BSP()
     m_numIndices = 0;
     m_numTextures = 0;
     m_numLightmaps = 0;
+    m_numOfNodes = 0;
+    m_numOfLeafs = 0;
+    m_numOfPlanes = 0;
+    m_numOfBrushes = 0;
+    m_numOfBrushSides = 0;
+    m_numOfLeafBrushes = 0;
 
     m_pEntities = nullptr;
     m_pVerts = nullptr;
@@ -114,6 +171,12 @@ Quake3BSP::Quake3BSP()
     m_pIndices = nullptr;
     pTextures = nullptr;
     pLightmaps = nullptr;
+    m_pNodes = nullptr;
+    m_pLeafs = nullptr;
+    m_pPlanes = nullptr;
+    m_pBrushes = nullptr;
+    m_pBrushSides = nullptr;
+    m_pLeafBrushes = nullptr;
 }
 
 Quake3BSP::~Quake3BSP()
@@ -124,4 +187,10 @@ Quake3BSP::~Quake3BSP()
     delete[] m_pIndices;
     delete[] pTextures;
     delete[] pLightmaps;
+    delete[] m_pNodes;
+    delete[] m_pLeafs;
+    delete[] m_pPlanes;
+    delete[] m_pBrushes;
+    delete[] m_pBrushSides;
+    delete[] m_pLeafBrushes;
 }

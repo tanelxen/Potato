@@ -85,7 +85,7 @@ int main()
     
     Camera camera(window);
     
-    Q3MapScene scene(&camera);
+    Q3MapScene scene(window, &camera);
     scene.loadMap("assets/maps/level.bsp");
 
     double prevTime = 0;

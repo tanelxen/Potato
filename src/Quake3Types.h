@@ -57,3 +57,47 @@ struct tBSPTexture {
 struct tBSPLightmap {
     byte imageBits[128*128*3]; // The RGB data in a 128x128 image
 };
+
+// This stores a node in the BSP tree
+struct tBSPNode
+{
+    int plane;                    // The index into the planes array
+    int child[2]; /* front, back */
+    int mins[3];
+    int maxs[3];
+};
+
+// This stores a leaf (end node) in the BSP tree
+struct tBSPLeaf
+{
+    int cluster;                // The visibility cluster
+    int area;                    // The area portal
+    int mins[3];
+    int maxs[3];
+    int leafface;                // The first index into the face array
+    int numOfLeafFaces;            // The number of faces for this leaf
+    int leafBrush;                // The first index for into the brushes
+    int numOfLeafBrushes;        // The number of brushes for this leaf
+};
+
+// This stores a splitter plane in the BSP tree
+struct tBSPPlane
+{
+    glm::vec3 normal;            // Plane normal.
+    float distance;             // The plane distance from origin
+};
+
+// This stores the brush data
+struct tBSPBrush
+{
+    int brushSide;                // The starting brush side for the brush
+    int numOfBrushSides;        // Number of brush sides for the brush
+    int textureID;                // The texture index for the brush
+};
+
+// This stores the brush side data, which stores indices for the normal and texture ID
+struct tBSPBrushSide
+{
+    int plane;                    // The plane index
+    int textureID;                // The texture index
+};

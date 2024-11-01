@@ -26,4 +26,22 @@ struct Quake3BSP
     
     tBSPLightmap* pLightmaps;
     int m_numLightmaps;
+    
+    tBSPNode *m_pNodes;
+    int m_numOfNodes;
+    
+    tBSPLeaf *m_pLeafs;
+    int m_numOfLeafs;
+    
+    tBSPPlane *m_pPlanes;
+    int m_numOfPlanes;
+    
+    tBSPBrush *m_pBrushes;
+    int m_numOfBrushes;
+    
+    tBSPBrushSide *m_pBrushSides;
+    int m_numOfBrushSides;
+    
+    int *m_pLeafBrushes;
+    int m_numOfLeafBrushes;
 };

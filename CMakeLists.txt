@@ -52,6 +52,8 @@ add_executable( ${PROJECT_NAME}
         src/TextureAtlas.h
         src/Q3MapScene.cpp
         src/Q3MapScene.h
+        src/Q3BspCollision.cpp
+        src/Q3BspCollision.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)

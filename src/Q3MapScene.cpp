@@ -11,11 +11,15 @@
 #include "Quake3Bsp.h"
 #include "Camera.h"
 
+#include <GLFW/glfw3.h>
+
 #define degrees(rad) ((rad) * (180.0f / M_PI))
 #define radians(deg) ((deg) * (M_PI / 180.0f))
 
+static int oldMouseButtonState = GLFW_RELEASE;
 
-Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
+
+Q3MapScene::Q3MapScene(GLFWwindow* window, Camera *camera) : window(window), m_pCamera(camera)
 {
     
 }
@@ -62,15 +66,33 @@ void Q3MapScene::loadMap(const std::string &filename)
     }
     
     m_mesh.initFromBsp(&bsp);
+    m_collision.initFromBsp(&bsp);
 }
 
 void Q3MapScene::update(float dt)
 {
+    if (window == nullptr) return;
+    if (m_pCamera == nullptr) return;
+    
+    int newMouseButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    bool isClick = (newMouseButtonState == GLFW_RELEASE && oldMouseButtonState == GLFW_PRESS);
+    oldMouseButtonState = newMouseButtonState;
+    
     m_pCamera->update(dt);
+    
+    if (isClick)
+    {
+        Ray ray = m_pCamera->getMousePosInWorld();
+        AABB aabb = { .mins = {0, 0, 0}, .maxs = {0, 0, 0} };
+        
+        m_collision.check(ray.origin, ray.origin + ray.dir * 1024.0f, aabb);
+    }
 }
 
 void Q3MapScene::draw()
 {
+    if (m_pCamera == nullptr) return;
+    
     glm::mat4x4 mvp = m_pCamera->projection * m_pCamera->view;
     m_mesh.renderFaces(mvp);
 }
