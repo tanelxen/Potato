@@ -11,7 +11,7 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
-set(CMAKE_XCODE_GENERATE_SCHEME ON)
+set(CMAKE_XCODE_GENERATE_SCHEME OFF)
 
 # Thirdparty libraries
 add_subdirectory( vendor/glad )
@@ -54,6 +54,11 @@ add_executable( ${PROJECT_NAME}
         src/Q3MapScene.h
         src/Q3BspCollision.cpp
         src/Q3BspCollision.h
+        src/PlayerMovement.cpp
+        src/PlayerMovement.h
+        
+        src/Player.cpp
+        src/Player.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)

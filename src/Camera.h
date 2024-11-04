@@ -26,7 +26,9 @@ public:
     ~Camera();
 
     void updateViewport(float width, float height);
-    void update(float dt);
+//    void update(float dt);
+    
+    void setTransform(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& right, const glm::vec3& up);
     
     Ray getMousePosInWorld() const;
     
@@ -35,20 +37,20 @@ public:
     glm::mat4x4 projection;
     glm::mat4x4 view;
     
-    glm::vec3 position = {0, 128, 256};
+//    glm::vec3 position = {0, 128, 256};
     
-    float pitch = -0.5;
-    float yaw = -1.57;
+//    float pitch = -0.5;
+//    float yaw = -1.57;
 
 private:
-    float moveSpeed = 96;
-    float mouseSense = 0.3;
-
-    glm::vec3 velocity = {0, 0, 0};
-
-    double prevMouseX = 0;
-    double prevMouseY = 0;
-    bool isFirstFrame = true;
+//    float moveSpeed = 96;
+//    float mouseSense = 0.3;
+//
+//    glm::vec3 velocity = {0, 0, 0};
+//
+//    double prevMouseX = 0;
+//    double prevMouseY = 0;
+//    bool isFirstFrame = true;
 
     glm::vec3 forward = {0, 0, 0};
     glm::vec3 right = {0, 0, 0};

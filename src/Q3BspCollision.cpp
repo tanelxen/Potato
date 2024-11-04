@@ -16,7 +16,9 @@ struct trace_work
     glm::vec3 endpos;
     float frac;
     
-    int flags;
+    bool startsolid;
+    bool allsolid;
+    
     glm::vec3 mins;
     glm::vec3 maxs;
     glm::vec3 offsets[8];
@@ -30,14 +32,6 @@ enum bsp_contents
 {
     CONTENTS_SOLID = 1,
     LAST_CONTENTS
-};
-
-enum tw_flags
-{
-    TW_STARTS_OUT   = 1 << 1,
-    TW_ENDS_OUT     = 1 << 2,
-    TW_ALL_SOLID    = 1 << 3,
-    TW_LAST_FLAG
 };
 
 enum plane_type
@@ -74,13 +68,13 @@ struct PlaneExtended
         
         type = PLANE_NONAXIAL;
         
-        if (normal.x == 1.0f || normal.x == -1.0f) {
+        if (normal.x == 1.0f) {
             type = PLANE_X;
         }
-        else if (normal.y == 1.0f || normal.y == -1.0f) {
+        else if (normal.y == 1.0f) {
             type = PLANE_Y;
         }
-        else if (normal.z == 1.0f || normal.z == -1.0f) {
+        else if (normal.z == 1.0f) {
             type = PLANE_Z;
         }
     }
@@ -138,14 +132,27 @@ void Q3BspCollision::initFromBsp(Quake3BSP *bsp)
     }
 }
 
-void Q3BspCollision::check(const glm::vec3 &start, const glm::vec3 &end, const AABB &aabb) const
+void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs) const
 {
     trace_work work;
+    pImpl->trace(work, start, end, mins, maxs);
     
-    pImpl->trace(work, start, end, aabb.mins, aabb.maxs);
+    result.endpos = work.endpos;
+    result.normal = work.normal;
+    result.fraction = work.frac;
     
-    printf("trace (frac = %.1f)\n", work.frac);
+    result.startsolid = work.startsolid;
+    result.allsolid = work.allsolid;
 }
+
+//void Q3BspCollision::check(const glm::vec3 &start, const glm::vec3 &end, const AABB &aabb) const
+//{
+//    trace_work work;
+//    
+//    pImpl->trace(work, start, end, aabb.mins, aabb.maxs);
+//    
+//    printf("trace (frac = %.1f)\n", work.frac);
+//}
 
 Q3BspCollision::~Q3BspCollision()
 {
@@ -158,7 +165,8 @@ Q3BspCollision::~Q3BspCollision()
 void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs)
 {
     work.frac = 1;
-    work.flags = 0;
+    work.startsolid = false;
+    work.allsolid = false;
     
     glm::vec3 offset = (mins + maxs) * 0.5f;
     
@@ -212,94 +220,6 @@ void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const
     }
 }
 
-void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
-{
-    /* TODO: do optimized check for the first 6 planes which are axial */
-
-    float start_frac = -1;
-    float end_frac = 1;
-    
-    int closest_plane_index;
-
-    for (int i = 0; i < brush.numOfBrushSides; ++i)
-    {
-        int side_index = brush.brushSide + i;
-        int plane_index = m_brushSides[side_index].plane;
-        PlaneExtended* plane = &m_planes[plane_index];
-
-        float dist = plane->distance - glm::dot(work.offsets[plane->signbits], plane->normal);
-
-        float start_distance = glm::dot(work.start, plane->normal) - dist;
-        float end_distance = glm::dot(work.end, plane->normal) - dist;
-
-        /* TODO:
-         * for some reason these checks incorrectly report all solid
-         * when they shouldn't. for now I'm just ignoring them
-         */
-
-        if (start_distance > 0) work.flags |= TW_STARTS_OUT;
-        if (end_distance > 0) work.flags |= TW_ENDS_OUT;
-
-        if (start_distance > 0 &&
-            (end_distance >= SURF_CLIP_EPSILON ||
-             end_distance >= start_distance))
-        {
-            return;
-        }
-
-        if (start_distance <= 0 && end_distance <= 0) continue;
-        
-        float frac;
-
-        if (start_distance > end_distance)
-        {
-            frac = (start_distance - SURF_CLIP_EPSILON) / (start_distance - end_distance);
-
-            if (frac > start_frac) {
-                start_frac = frac;
-                closest_plane_index = plane_index;
-            }
-        }
-        else
-        {
-            frac = (start_distance + SURF_CLIP_EPSILON) / (start_distance - end_distance);
-            end_frac = fmin(end_frac, frac);
-        }
-    }
-
-    if (start_frac < end_frac && start_frac > -1 && start_frac < work.frac)
-    {
-        work.frac = fmax(start_frac, 0);
-        work.normal = m_planes[closest_plane_index].normal;
-    }
-
-    if (!(work.flags & (TW_STARTS_OUT | TW_ENDS_OUT)))
-    {
-        work.frac = 0;
-    }
-}
-
-void Q3BspCollision::Impl::trace_leaf(trace_work& work, int index)
-{
-    const tBSPLeaf &leaf = m_leafs[index];
-
-    for (int i = 0; i < leaf.numOfLeafBrushes; ++i)
-    {
-        int brush_index = m_leafBrushes[leaf.leafBrush + i];
-        const tBSPBrush &brush = m_brushes[brush_index];
-        int contents = m_textures[brush.textureID];
-
-        if (brush.numOfBrushSides && (contents & CONTENTS_SOLID))
-        {
-            trace_brush(work, brush);
-
-            if (!work.frac) return;
-        }
-    }
-
-    /* TODO: collision with patches */
-}
-
 void Q3BspCollision::Impl::trace_node(trace_work& work, int index, float start_frac, float end_frac, const glm::vec3 &start, const glm::vec3 &end)
 {
     float start_distance;
@@ -307,7 +227,7 @@ void Q3BspCollision::Impl::trace_node(trace_work& work, int index, float start_f
     float offset;
 
     if (index < 0) {
-        trace_leaf(work, (-index) - 1);
+        trace_leaf(work, -(index + 1));
         return;
     }
 
@@ -385,4 +305,117 @@ void Q3BspCollision::Impl::trace_node(trace_work& work, int index, float start_f
     mid_frac = start_frac + (end_frac - start_frac) * frac2;
     mid = start + (end - start) * frac2;
     trace_node(work, node->child[side^1], mid_frac, end_frac, mid, end);
+}
+
+void Q3BspCollision::Impl::trace_leaf(trace_work& work, int index)
+{
+    const tBSPLeaf &leaf = m_leafs[index];
+
+    for (int i = 0; i < leaf.numOfLeafBrushes; ++i)
+    {
+        int brush_index = m_leafBrushes[leaf.leafBrush + i];
+        const tBSPBrush &brush = m_brushes[brush_index];
+        int contents = m_textures[brush.textureID];
+
+        if ((contents & CONTENTS_SOLID))
+        {
+            trace_brush(work, brush);
+
+            if (!work.frac) return;
+            
+//            if (work.flags & TW_ALL_SOLID) return;
+        }
+    }
+
+    /* TODO: collision with patches */
+}
+
+void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
+{
+    /* TODO: do optimized check for the first 6 planes which are axial */
+
+    float start_frac = -1;
+    float end_frac = 1;
+    
+    PlaneExtended* closest_plane;
+    
+    bool getout = false;
+    bool startout = false;
+
+    for (int i = 0; i < brush.numOfBrushSides; ++i)
+    {
+        int side_index = brush.brushSide + i;
+        int plane_index = m_brushSides[side_index].plane;
+        PlaneExtended* plane = &m_planes[plane_index];
+
+        float dist = plane->distance - glm::dot(work.offsets[plane->signbits], plane->normal);
+
+        float start_distance = glm::dot(work.start, plane->normal) - dist;
+        float end_distance = glm::dot(work.end, plane->normal) - dist;
+
+        if (start_distance > 0) {
+            startout = true;
+        }
+        
+        if (end_distance > 0) {
+            // endpoint is not in solid
+            getout = true;
+        }
+
+//        if (start_distance > 0) work.flags |= TW_STARTS_OUT;
+//        if (end_distance > 0) work.flags |= TW_ENDS_OUT;
+
+        if (start_distance > 0 && (end_distance >= SURF_CLIP_EPSILON || end_distance >= start_distance))
+        {
+            return;
+        }
+
+        if (start_distance <= 0 && end_distance <= 0) continue;
+
+        if (start_distance > end_distance)
+        {
+            float frac = (start_distance - SURF_CLIP_EPSILON) / (start_distance - end_distance);
+
+            if (frac > start_frac) {
+                start_frac = frac;
+                closest_plane = plane;
+            }
+        }
+        else
+        {
+            float frac = (start_distance + SURF_CLIP_EPSILON) / (start_distance - end_distance);
+            end_frac = fmin(end_frac, frac);
+        }
+    }
+
+//    if (start_frac < end_frac && start_frac > -1 && start_frac < work.frac)
+//    {
+//        work.frac = fmax(start_frac, 0);
+//        work.normal = m_planes[closest_plane_index].normal;
+//    }
+//
+//    if (!(work.flags & (TW_STARTS_OUT | TW_ENDS_OUT)))
+//    {
+//        work.frac = 0;
+//    }
+    
+    if (!startout)
+    {
+        // original point was inside brush
+        work.startsolid = true;
+        
+        if (!getout)
+        {
+            work.allsolid = true;
+            work.frac = 0;
+        }
+        
+        return;
+    }
+    
+    if (start_frac < end_frac && start_frac > -1 && start_frac < work.frac)
+    {
+        work.frac = fmax(start_frac, 0);
+        work.normal = closest_plane->normal;
+    }
 }

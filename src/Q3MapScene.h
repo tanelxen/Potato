@@ -13,6 +13,8 @@
 
 class Camera;
 class GLFWwindow;
+class PlayerMovement;
+class Player;
 
 class Q3MapScene
 {
@@ -25,6 +27,10 @@ public:
     
 private:
     Camera* m_pCamera;
+    
+    Player* m_pPlayer;
+    PlayerMovement* m_pMovement;
+    
     Q3BspMesh m_mesh;
     Q3BspCollision m_collision;
     

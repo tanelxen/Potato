@@ -10,6 +10,8 @@
 #include "KeyValueCollection.h"
 #include "Quake3Bsp.h"
 #include "Camera.h"
+#include "Player.h"
+#include "PlayerMovement.h"
 
 #include <GLFW/glfw3.h>
 
@@ -32,6 +34,12 @@ void Q3MapScene::loadMap(const std::string &filename)
         return;
     }
     
+    m_collision.initFromBsp(&bsp);
+    
+    m_pMovement = new PlayerMovement(&m_collision);
+    
+    m_pPlayer = new Player(window, m_pMovement);
+    
     KeyValueCollection entities;
     entities.initFromString(bsp.m_pEntities);
     
@@ -47,8 +55,8 @@ void Q3MapScene::loadMap(const std::string &filename)
         {
             printf("angle = %i\n", angle);
             
-            m_pCamera->yaw = radians(-angle);
-            m_pCamera->pitch = 0;
+            m_pPlayer->yaw = radians(-angle);
+            m_pPlayer->pitch = 0;
         }
         
         glm::vec3 origin = {0, 0, 0};
@@ -57,16 +65,15 @@ void Q3MapScene::loadMap(const std::string &filename)
         {
             printf("origin = (%1.0f %1.0f %1.0f)\n", origin.x, origin.y, origin.z);
             
-            m_pCamera->position.x = origin.x;
-            m_pCamera->position.y = origin.z;
-            m_pCamera->position.z = -origin.y;
+            m_pPlayer->position.x = origin.x;
+            m_pPlayer->position.y = origin.z;
+            m_pPlayer->position.z = -origin.y;
             
-            m_pCamera->position.y += 60;
+            m_pPlayer->position.y += 16;
         }
     }
     
     m_mesh.initFromBsp(&bsp);
-    m_collision.initFromBsp(&bsp);
 }
 
 void Q3MapScene::update(float dt)
@@ -74,19 +81,25 @@ void Q3MapScene::update(float dt)
     if (window == nullptr) return;
     if (m_pCamera == nullptr) return;
     
-    int newMouseButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    bool isClick = (newMouseButtonState == GLFW_RELEASE && oldMouseButtonState == GLFW_PRESS);
-    oldMouseButtonState = newMouseButtonState;
+    m_pPlayer->update(dt);
     
-    m_pCamera->update(dt);
+    glm::vec3 camera_pos = m_pPlayer->position;
+    camera_pos.y += 40;
     
-    if (isClick)
-    {
-        Ray ray = m_pCamera->getMousePosInWorld();
-        AABB aabb = { .mins = {0, 0, 0}, .maxs = {0, 0, 0} };
-        
-        m_collision.check(ray.origin, ray.origin + ray.dir * 1024.0f, aabb);
-    }
+    m_pCamera->setTransform(camera_pos, m_pPlayer->forward, m_pPlayer->right, m_pPlayer->up);
+    
+//    int newMouseButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+//    bool isClick = (newMouseButtonState == GLFW_RELEASE && oldMouseButtonState == GLFW_PRESS);
+//    oldMouseButtonState = newMouseButtonState;
+//    
+//    
+//    if (isClick)
+//    {
+//        Ray ray = m_pCamera->getMousePosInWorld();
+//        AABB aabb = { .mins = {0, 0, 0}, .maxs = {0, 0, 0} };
+//        
+//        m_collision.check(ray.origin, ray.origin + ray.dir * 1024.0f, aabb);
+//    }
 }
 
 void Q3MapScene::draw()
