@@ -17,7 +17,7 @@ struct Plane
     float distance;
 };
 
-class GLFWwindow;
+struct GLFWwindow;
 
 class Camera
 {

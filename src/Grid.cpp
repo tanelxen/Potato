@@ -41,7 +41,7 @@ void Grid::draw(const Camera& camera) const
 {
     shader.bind();
     glm::mat4x4 mvp = camera.projection * camera.view;
-    shader.setUniformMatrix((const float*) &mvp, "MVP");
+    shader.setUniform("MVP", mvp);
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

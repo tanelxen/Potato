@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
+#include <glm/glm.hpp>
 
 class Shader
 {
@@ -25,8 +29,12 @@ public:
     void bind() const;
     void unbind() const;
 
-    void setUniformMatrix(const float* data, const char* name) const;
-    void setUniformVector4(const float* data, const char* name) const;
+    void setUniform(const std::string& name, const glm::vec3& vector) const;
+    void setUniform(const std::string& name, const glm::vec4& vector) const;
+    void setUniform(const std::string& name, const glm::mat4& matrix) const;
+    
+    void setUniform(const std::string& name, const std::vector<glm::vec3>& vectors) const;
+    void setUniform(const std::string& name, const std::vector<glm::mat4>& matrices) const;
 
 //private:
     int program;

@@ -11,10 +11,12 @@
 #include "Q3BspMesh.h"
 #include "Q3BspCollision.h"
 
+struct GLFWwindow;
 class Camera;
-class GLFWwindow;
 class PlayerMovement;
 class Player;
+
+struct StudioRenderer;
 
 class Q3MapScene
 {
@@ -35,4 +37,6 @@ private:
     Q3BspCollision m_collision;
     
     GLFWwindow* window;
+    
+    StudioRenderer* studio;
 };

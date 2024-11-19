@@ -62,31 +62,46 @@ void Shader::unbind() const
     glUseProgram(0);
 }
 
-void Shader::setUniformMatrix(const float *data, const char *name) const
-{
-    const GLint location = glGetUniformLocation(program, name);
 
-    if (location == -1)
-    {
-        printf("Shader have no uniform %s\n", name);
-        return;
-    }
 
-    glUniformMatrix4fv(location, 1, GL_FALSE, data);
-}
+//void Shader::setUniformMatrix(const float *data, const char *name) const
+//{
+//    const GLint location = glGetUniformLocation(program, name);
+//
+//    if (location == -1)
+//    {
+//        printf("Shader have no uniform %s\n", name);
+//        return;
+//    }
+//
+//    glUniformMatrix4fv(location, 1, GL_FALSE, data);
+//}
+//
+//void Shader::setUniformMatrices(const float *data, int num, const char *name) const
+//{
+//    const GLint location = glGetUniformLocation(program, name);
+//
+//    if (location == -1)
+//    {
+//        printf("Shader have no uniform %s\n", name);
+//        return;
+//    }
+//
+//    glUniformMatrix4fv(location, num, GL_FALSE, data);
+//}
 
-void Shader::setUniformVector4(const float *data, const char *name) const
-{
-    const GLint location = glGetUniformLocation(program, name);
-
-    if (location == -1)
-    {
-        printf("Shader have no uniform %s\n", name);
-        return;
-    }
-
-    glUniform4fv(location, 1, data);
-}
+//void Shader::setUniformVector4(const float *data, const char *name) const
+//{
+//    const GLint location = glGetUniformLocation(program, name);
+//
+//    if (location == -1)
+//    {
+//        printf("Shader have no uniform %s\n", name);
+//        return;
+//    }
+//
+//    glUniform4fv(location, 1, data);
+//}
 
 void Shader::init(const char *filepath)
 {
@@ -97,6 +112,12 @@ void Shader::init(const char *filepath)
     };
 
     std::ifstream stream(filepath);
+    
+    if (!stream.is_open())
+    {
+        std::cerr << "Error: Failed to open the file at path: " << filepath << std::endl;
+        return;
+    }
 
     std::string line;
     std::stringstream vertexStream;
@@ -130,6 +151,72 @@ void Shader::init(const char *filepath)
 
     init(vertexStream.str().c_str(), fragmentStream.str().c_str());
 }
+
+void Shader::setUniform(const std::string& name, const glm::vec3& vector) const
+{
+    const GLint location = glGetUniformLocation(program, name.c_str());
+
+    if (location == -1)
+    {
+        printf("Shader have no uniform %s\n", name.c_str());
+        return;
+    }
+
+    glUniform3fv(location, 1, (const float*) &vector);
+}
+
+void Shader::setUniform(const std::string& name, const glm::vec4& vector) const
+{
+    const GLint location = glGetUniformLocation(program, name.c_str());
+
+    if (location == -1)
+    {
+        printf("Shader have no uniform %s\n", name.c_str());
+        return;
+    }
+
+    glUniform4fv(location, 1, (const float*) &vector);
+}
+
+void Shader::setUniform(const std::string &name, const glm::mat4& matrix) const
+{
+    const GLint location = glGetUniformLocation(program, name.c_str());
+
+    if (location == -1)
+    {
+        printf("Shader have no uniform %s\n", name.c_str());
+        return;
+    }
+    
+    glUniformMatrix4fv(location, 1, GL_FALSE, (const float*) &matrix);
+}
+
+void Shader::setUniform(const std::string &name, const std::vector<glm::vec3> &vectors) const
+{
+    const GLint location = glGetUniformLocation(program, name.c_str());
+
+    if (location == -1)
+    {
+        printf("Shader have no uniform %s\n", name.c_str());
+        return;
+    }
+    
+    glUniform4fv(location, (GLsizei)(vectors.size()), &(vectors[0][0]));
+}
+
+void Shader::setUniform(const std::string &name, const std::vector<glm::mat4> &matrices) const
+{
+    const GLint location = glGetUniformLocation(program, name.c_str());
+
+    if (location == -1)
+    {
+        printf("Shader have no uniform %s\n", name.c_str());
+        return;
+    }
+    
+    glUniformMatrix4fv(location, (GLsizei)(matrices.size()), GL_FALSE, &(matrices[0][0][0]));
+}
+
 
 unsigned int compile_shader(unsigned int type, const char* source)
 {

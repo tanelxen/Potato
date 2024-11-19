@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Quake3Types.h"
+#include <string>
 #include <vector>
 
 struct TextureTile

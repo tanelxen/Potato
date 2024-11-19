@@ -5,21 +5,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-//#include <glm/gtx/io.hpp>
-
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
-#include "imguiStyling.h"
-
 #include "Shader.h"
 #include "Camera.h"
-
-#include "Grid.h"
-#include "World.h"
-#include "BrushTool.h"
-#include "CubeGeometry.h"
 
 #include "Q3MapScene.h"
 
@@ -30,12 +17,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
-
-
-ImVec4 clear_color = ImColor(114, 144, 154);
-
-void imgui_init(GLFWwindow* window);
-void imgui_draw();
 
 bool animateNextFrame(int desiredFrameRate);
 
@@ -92,18 +73,7 @@ int main()
     double deltaTime;
 
     glfwSwapInterval(0);
-    
-    CubeGeometry::init();
-    
-    Grid grid;
-    grid.init();
-    
-    World world;
-    
-    BrushTool tool = BrushTool(window, &camera, &world);
-    tool.init();
 
-    glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CCW);
 
     while (!glfwWindowShouldClose(window))
@@ -120,68 +90,18 @@ int main()
         camera.updateViewport((float)width, (float)height);
         scene.update(deltaTime);
         
-//        tool.update();
-        
         glViewport(0, 0, width, height);
         
-        glClearColor(0.1, 0.1, 0.1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-//        tool.draw(camera);
-//        world.draw(camera);
-        
-//        glDisable(GL_CULL_FACE);
-//        grid.draw(camera);
-        
         scene.draw();
-
-//        imgui_draw();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    
-    CubeGeometry::deinit();
-
-//    ImGui_ImplOpenGL3_Shutdown();
-//    ImGui_ImplGlfw_Shutdown();
 
     glfwDestroyWindow(window);
     glfwTerminate();
 
     return 0;
-}
-
-void imgui_init(GLFWwindow* window)
-{
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 150");
-
-    setImGuiStyle();
-}
-
-void imgui_draw()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    {
-        static float f = 0.0f;
-        ImGui::Text("Hello, world!");
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", (float*)&clear_color);
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    }
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 bool animateNextFrame(int desiredFrameRate)

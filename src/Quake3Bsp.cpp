@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include "Quake3Bsp.h"
 
 // This is our lumps enumeration

@@ -31,7 +31,7 @@ Camera::~Camera()
 void Camera::updateViewport(float width, float height)
 {
     float ratio = width / height;
-    float fov = glm::radians(38.0f);
+    float fov = glm::radians(60.0f);
     projection = glm::perspective(fov, ratio, 0.1f, 4096.0f);
 }
 

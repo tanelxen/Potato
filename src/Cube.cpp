@@ -78,10 +78,10 @@ void WiredCube::draw(const Camera& camera) const
     glm::mat4x4 mvp = camera.projection * camera.view * model;
     
     shader.bind();
-    shader.setUniformMatrix((const float*) &mvp, "MVP");
+    shader.setUniform("MVP", mvp);
     
     glm::vec4 color{1, 1, 1, 1};
-    shader.setUniformVector4((const float*) &color, "color");
+    shader.setUniform("color", color);
     
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -212,10 +212,10 @@ void ShadedCube::draw(const Camera& camera) const
     glm::mat4x4 mvp = camera.projection * camera.view * model;
     
     shader.bind();
-    shader.setUniformMatrix((const float*) &mvp, "MVP");
+    shader.setUniform("MVP", mvp);
     
     glm::vec4 color{0.5, 0.0, 0.5, 1.0};
-    shader.setUniformVector4((const float*) &color, "color");
+    shader.setUniform("color", color);
     
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

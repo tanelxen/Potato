@@ -242,7 +242,7 @@ void Q3BspMesh::initBuffers()
 void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
 {
     shader.bind();
-    shader.setUniformMatrix((const float*) &mvp, "MVP");
+    shader.setUniform("MVP", mvp);
     
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
