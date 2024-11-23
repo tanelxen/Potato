@@ -37,6 +37,8 @@ public:
     glm::mat4x4 projection;
     glm::mat4x4 view;
     
+    glm::mat4x4 weaponProjection;
+    
 //    glm::vec3 position = {0, 128, 256};
     
 //    float pitch = -0.5;

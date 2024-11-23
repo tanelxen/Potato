@@ -68,13 +68,13 @@ bool Quake3BSP::initFromFile(const char* filename)
     fseek(fp, lumps[kVertices].offset, SEEK_SET);
     fread(m_pVerts, m_numVerts, sizeof(tBSPVertex), fp);
 
-    // Swap from Quake to OpenGL coord system
-    for (int i = 0; i < m_numVerts; i++)
-    {
-        float temp = m_pVerts[i].vPosition.y;
-        m_pVerts[i].vPosition.y = m_pVerts[i].vPosition.z;
-        m_pVerts[i].vPosition.z = -temp;
-    }
+//    // Swap from Quake to OpenGL coord system
+//    for (int i = 0; i < m_numVerts; i++)
+//    {
+//        float temp = m_pVerts[i].vPosition.y;
+//        m_pVerts[i].vPosition.y = m_pVerts[i].vPosition.z;
+//        m_pVerts[i].vPosition.z = -temp;
+//    }
     
     // Textures (.shader filenames)
     m_numTextures = lumps[kTextures].length / sizeof(tBSPTexture);
@@ -121,13 +121,13 @@ bool Quake3BSP::initFromFile(const char* filename)
     fseek(fp, lumps[kPlanes].offset, SEEK_SET);
     fread(m_pPlanes, m_numOfPlanes, sizeof(tBSPPlane), fp);
     
-    // Go through every plane and convert it's normal to the Y-axis being up
-    for(int i = 0; i < m_numOfPlanes; i++)
-    {
-        float temp = m_pPlanes[i].normal.y;
-        m_pPlanes[i].normal.y = m_pPlanes[i].normal.z;
-        m_pPlanes[i].normal.z = -temp;
-    }
+//    // Go through every plane and convert it's normal to the Y-axis being up
+//    for(int i = 0; i < m_numOfPlanes; i++)
+//    {
+//        float temp = m_pPlanes[i].normal.y;
+//        m_pPlanes[i].normal.y = m_pPlanes[i].normal.z;
+//        m_pPlanes[i].normal.z = -temp;
+//    }
     
     // Brushes
     m_numOfBrushes = lumps[kBrushes].length / sizeof(int);

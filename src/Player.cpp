@@ -38,18 +38,19 @@ void Player::update(float dt)
     prevMouseX = curMouseX;
     prevMouseY = curMouseY;
 
-    yaw += dx * mouseSense * dt;
-    pitch -= dy * mouseSense * dt;
+    yaw -= dx * mouseSense * dt;
+    pitch += dy * mouseSense * dt;
     
     if (pitch > 1.5) pitch = 1.5;
     else if (pitch < -1.5) pitch = -1.5;
 
-    forward.x = cos(yaw) * cos(pitch);
-    forward.y = sin(pitch);
-    forward.z = sin(yaw) * cos(pitch);
+    
+    forward.x = cos(pitch) * cos(yaw);
+    forward.y = cos(pitch) * sin(yaw);
+    forward.z = -sin(pitch);
     forward = glm::normalize(forward);
 
-    glm::vec3 unit_up = {0, 1, 0};
+    glm::vec3 unit_up = {0, 0, 1};
 
     right = glm::cross(forward, unit_up);
     right = glm::normalize(right);

@@ -38,17 +38,17 @@ void StudioRenderer::draw(Camera *camera)
         glm::mat4 model = glm::mat4(1);
         
         model = glm::translate(model, inst.position);
-        model = glm::rotate(model, inst.yaw, glm::vec3(0, 1, 0));
+        model = glm::rotate(model, inst.yaw, glm::vec3(0, 0, 1));
 //        model = glm::scale(model, glm::vec3(1.1));
         
-        glm::mat4 quakeToGL = {
-             0,  0, -1,  0,
-            -1,  0,  0,  0,
-             0,  1,  0,  0,
-             0,  0,  0,  1
-        };
+//        glm::mat4 quakeToGL = {
+//             0,  0, -1,  0,
+//            -1,  0,  0,  0,
+//             0,  1,  0,  0,
+//             0,  0,  0,  1
+//        };
         
-        glm::mat4 mvp = camera->projection * camera->view * model * quakeToGL;
+        glm::mat4 mvp = camera->projection * camera->view * model;// * quakeToGL;
         m_shader.setUniform("uMVP", mvp);
         
         m_shader.setUniform("uBoneTransforms", inst.animator.getBoneTransforms());
@@ -68,7 +68,7 @@ void StudioRenderer::drawWeapon(Camera *camera)
          0,  0,  0.5, 1
     };
     
-    glm::mat4 mvp = camera->projection * quakeToGL;
+    glm::mat4 mvp = camera->weaponProjection * quakeToGL;
     m_shader.setUniform("uMVP", mvp);
     
     m_shader.setUniform("uBoneTransforms", m_player->animator.getBoneTransforms());

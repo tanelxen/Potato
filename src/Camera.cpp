@@ -31,8 +31,12 @@ Camera::~Camera()
 void Camera::updateViewport(float width, float height)
 {
     float ratio = width / height;
-    float fov = glm::radians(60.0f);
-    projection = glm::perspective(fov, ratio, 0.1f, 4096.0f);
+    
+    float worldFOV = glm::radians(55.0f);
+    projection = glm::perspective(worldFOV, ratio, 0.1f, 4096.0f);
+    
+    float weaponFOV = glm::radians(54.0f);
+    weaponProjection = glm::perspective(weaponFOV, ratio, 0.1f, 256.0f);
 }
 
 Ray Camera::getMousePosInWorld() const

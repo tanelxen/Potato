@@ -27,8 +27,8 @@ static int MAX_CLIP_PLANES = 5;
 static float OVERCLIP = 1.001;
 static float STEPSIZE = 18;
 
-static glm::vec3 player_mins = { -15, -28, -15 };
-static glm::vec3 player_maxs = { 15, 28, 15 };
+static glm::vec3 player_mins = { -15, -15, -28 };
+static glm::vec3 player_maxs = { 15, 15, 28 };
 
 enum movement_bits
 {
@@ -95,7 +95,8 @@ void PlayerMovement::update(float dt)
 
 void PlayerMovement::trace_ground()
 {
-    glm::vec3 point = m_position + glm::vec3{0, -16.0, 0};
+    glm::vec3 point = m_position;
+    point.z -= 16;
     
     HitResult result;
     m_pCollision->trace(result, m_position, point, player_mins, player_maxs);
@@ -119,8 +120,8 @@ void PlayerMovement::apply_inputs(float dt)
     glm::vec3 forward = m_forward;
     glm::vec3 right = m_right;
     
-    forward.y = 0;
-    right.y = 0;
+    forward.z = 0;
+    right.z = 0;
     
     glm::vec3 direction = {0, 0, 0};
     direction += forward * m_forwardmove * cl_forwardspeed;
@@ -163,8 +164,8 @@ void PlayerMovement::apply_air_control(const glm::vec3& direction, float wishspe
 {
     if (m_forwardmove == 0 || wishspeed == 0) return;
 
-    float falling_speed = velocity.y;
-    velocity.y = 0;
+    float falling_speed = velocity.z;
+    velocity.z = 0;
     
     float speed = sqrt(glm::dot(velocity, velocity));
     
@@ -181,7 +182,7 @@ void PlayerMovement::apply_air_control(const glm::vec3& direction, float wishspe
     }
 
     velocity *= speed;
-    velocity.y = falling_speed;
+    velocity.z = falling_speed;
 }
 
 void PlayerMovement::apply_acceleration(const glm::vec3& direction, float wishspeed, float acceleration, float dt)
@@ -212,7 +213,7 @@ void PlayerMovement::apply_friction(float dt)
     
     if (speed < 1) {
         velocity.x = 0;
-        velocity.z = 0;
+        velocity.y = 0;
         return;
     }
 
@@ -230,7 +231,7 @@ void PlayerMovement::apply_jump()
     m_movementBits |= MOVEMENT_JUMP_THIS_FRAME;
     m_movementBits &= ~MOVEMENT_JUMP;
     
-    velocity.y = 270;
+    velocity.z = 270;
 }
 
 void PlayerMovement::step_slide(bool gravity, float dt)
@@ -245,7 +246,7 @@ void PlayerMovement::step_slide(bool gravity, float dt)
     }
     
     glm::vec3 down = start_o;
-    down.y -= STEPSIZE;
+    down.z -= STEPSIZE;
     
     HitResult result;
     m_pCollision->trace(result, start_o, down, player_mins, player_maxs);
@@ -259,7 +260,7 @@ void PlayerMovement::step_slide(bool gravity, float dt)
     }
 
     up = start_o;
-    up.y += STEPSIZE;
+    up.z += STEPSIZE;
     
     // test the player position if they were a stepheight higher
     m_pCollision->trace(result, up, up, player_mins, player_maxs);
@@ -278,7 +279,7 @@ void PlayerMovement::step_slide(bool gravity, float dt)
 
     // push down the final amount
     down = m_position;
-    down.y -= STEPSIZE;
+    down.z -= STEPSIZE;
     
     m_pCollision->trace(result, m_position, down, player_mins, player_maxs);
     
@@ -301,14 +302,14 @@ bool PlayerMovement::slide(bool gravity, float dt)
     if (gravity)
     {
         end_velocity = velocity;
-        end_velocity.y -= sv_gravity * dt;
+        end_velocity.z -= sv_gravity * dt;
 
         /*
          * not 100% sure why this is necessary, maybe to avoid tunneling
          * through the floor when really close to it
          */
 
-        velocity.y = (end_velocity.y + velocity.y) * 0.5f;
+        velocity.z = (end_velocity.z + velocity.z) * 0.5f;
 
         /* slide against floor */
         if (isGrounded) {
@@ -342,7 +343,7 @@ bool PlayerMovement::slide(bool gravity, float dt)
         {
             // entity is completely trapped in another solid
             // don't build up falling damage, but allow sideways acceleration
-            velocity.y = 0;
+            velocity.z = 0;
             return false;
         }
 

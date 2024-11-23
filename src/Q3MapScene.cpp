@@ -59,29 +59,31 @@ void Q3MapScene::loadMap(const std::string &filename)
         
         if (spawnPoint.getIntValue("angle", angle))
         {
-            printf("angle = %i\n", angle);
-            yaw = radians(angle - 90);
+            printf("entity_%i: angle = %i\n", i, angle);
+            yaw = radians(angle);
         }
         
         glm::vec3 origin = {0, 0, 0};
         
         if (spawnPoint.getVec3Value("origin", origin))
         {
-            position.x = origin.x;
-            position.y = origin.z;
-            position.z = -origin.y;
+//            position.x = origin.x;
+//            position.y = origin.z;
+//            position.z = -origin.y;
+            
+            position = origin;
         }
         
         if (i == 0)
         {
-            m_pPlayer->position = position + glm::vec3{0, 8, 0};
+            m_pPlayer->position = position + glm::vec3{0, 0, 8};
             m_pPlayer->yaw = yaw;
             m_pPlayer->pitch = 0;
         }
         else
         {
             auto modelInstance = studio->makeModelInstance("assets/models/barney.mdl");
-            modelInstance->position = position + glm::vec3{0, -24, 0};
+            modelInstance->position = position + glm::vec3{0, 0, -24};
             modelInstance->yaw = yaw;
         }
     }
@@ -97,7 +99,7 @@ void Q3MapScene::update(float dt)
     m_pPlayer->update(dt);
     
     glm::vec3 camera_pos = m_pPlayer->position;
-    camera_pos.y += 40;
+    camera_pos.z += 38;
     
     m_pCamera->setTransform(camera_pos, m_pPlayer->forward, m_pPlayer->right, m_pPlayer->up);
     
