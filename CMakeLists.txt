@@ -67,6 +67,9 @@ add_executable( ${PROJECT_NAME}
         src/GoldSrcModel.h
         src/StudioRenderer.cpp
         src/StudioRenderer.h
+        
+        src/Q3Bezier.cpp
+        src/Q3Bezier.h
 )
 
 

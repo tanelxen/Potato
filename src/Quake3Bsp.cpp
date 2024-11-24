@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include "Quake3Bsp.h"
+#include "Q3Bezier.h"
 
 // This is our lumps enumeration
 enum eLumps {
@@ -110,6 +111,8 @@ bool Quake3BSP::initFromFile(const std::string& filename)
     m_leafBrushes.resize(numLeafBrushes);
     fseek(fp, lumps[kLeafBrushes].offset, SEEK_SET);
     fread(m_leafBrushes.data(), numLeafBrushes, sizeof(int), fp);
+    
+    tesselateBezierPatches(m_faces, m_verts, m_indices, 9);
 
     fclose(fp);
     return (fp);

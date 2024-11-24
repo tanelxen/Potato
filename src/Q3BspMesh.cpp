@@ -58,7 +58,7 @@ void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas)
     {
         const tBSPFace &face = bsp->m_faces[i];
         
-        if (face.type != FACE_POLYGON && face.type != FACE_MESH) continue;
+        if (face.type == FACE_FX) continue;
         if (face.lightmapID == -1) continue;
         
         const TextureTile &tile = atlas.tiles[face.lightmapID];
@@ -178,7 +178,7 @@ void Q3BspMesh::initBuffers()
     {
         const tBSPFace &face = g_bsp->m_faces[i];
         
-        if (face.type != FACE_POLYGON && face.type != FACE_MESH) continue;
+        if (face.type == FACE_FX) continue;
         
         for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
         {
