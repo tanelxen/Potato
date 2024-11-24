@@ -142,9 +142,6 @@ void Q3BspMesh::GenerateTexture()
             glGenTextures(1, &textureID);
             glBindTexture(GL_TEXTURE_2D, textureID);
 
-            // glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &aniso);
-            // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
-
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -154,12 +151,10 @@ void Q3BspMesh::GenerateTexture()
             glGenerateMipmap(GL_TEXTURE_2D);
 
             m_textures[i] = textureID;
-
-            std::cout << path << std::endl;
-//            std::cout << "glGenTexture id: " << textureID << std::endl;
         }
         else
         {
+            std::cout << "Can't find: " << path << std::endl;
             m_textures[i] = missing_id;
         }
         
@@ -172,7 +167,6 @@ void Q3BspMesh::GenerateTexture()
 #define VERT_POSITION_LOC 0
 #define VERT_DIFFUSE_TEX_COORD_LOC 1
 #define VERT_LIGHTMAP_TEX_COORD_LOC 2
-#define VERT_NORMAL_LOC 3
 
 void Q3BspMesh::initBuffers()
 {
@@ -193,13 +187,10 @@ void Q3BspMesh::initBuffers()
     
     for (auto pair : indicesByTexture)
     {
-        Surface surface = {0};
+        auto& surface = surfaces.emplace_back();
         surface.texId = m_textures[pair.first];
-        
         surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
         surface.numVerts = (uint32_t)pair.second.size();
-        
-        surfaces.push_back(surface);
         
         indices.insert(indices.end(), pair.second.begin(), pair.second.end());
     }
@@ -223,9 +214,6 @@ void Q3BspMesh::initBuffers()
 
     glEnableVertexAttribArray(VERT_LIGHTMAP_TEX_COORD_LOC);
     glVertexAttribPointer(VERT_LIGHTMAP_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)20);
-
-    glEnableVertexAttribArray(VERT_NORMAL_LOC);
-    glVertexAttribPointer(VERT_NORMAL_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)28);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
