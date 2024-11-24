@@ -98,37 +98,31 @@ struct Q3BspCollision::Impl
     std::vector<int> m_textures;
 };
 
+Q3BspCollision::Q3BspCollision() : pImpl(new Impl) {}
+Q3BspCollision::~Q3BspCollision() = default;
+
 void Q3BspCollision::initFromBsp(Quake3BSP *bsp)
 {
-    pImpl = new Impl();
+//    pImpl = std::make_unique<Impl>();
     
-    pImpl->m_nodes.resize(bsp->m_numOfNodes);
-    std::copy(bsp->m_pNodes, bsp->m_pNodes + bsp->m_numOfNodes, pImpl->m_nodes.begin());
+    pImpl->m_nodes = bsp->m_nodes;
+    pImpl->m_leafs = bsp->m_leafs;
+    pImpl->m_brushes = bsp->m_brushes;
+    pImpl->m_brushSides = bsp->m_brushSides;
+    pImpl->m_leafBrushes = bsp->m_leafBrushes;
     
-    pImpl->m_leafs.resize(bsp->m_numOfLeafs);
-    std::copy(bsp->m_pLeafs, bsp->m_pLeafs + bsp->m_numOfLeafs, pImpl->m_leafs.begin());
+    pImpl->m_planes.resize(bsp->m_planes.size());
     
-    pImpl->m_brushes.resize(bsp->m_numOfBrushes);
-    std::copy(bsp->m_pBrushes, bsp->m_pBrushes + bsp->m_numOfBrushes, pImpl->m_brushes.begin());
-    
-    pImpl->m_brushSides.resize(bsp->m_numOfBrushSides);
-    std::copy(bsp->m_pBrushSides, bsp->m_pBrushSides + bsp->m_numOfBrushSides, pImpl->m_brushSides.begin());
-    
-    pImpl->m_leafBrushes.resize(bsp->m_numOfLeafBrushes);
-    std::copy(bsp->m_pLeafBrushes, bsp->m_pLeafBrushes + bsp->m_numOfLeafBrushes, pImpl->m_leafBrushes.begin());
-    
-    pImpl->m_planes.resize(bsp->m_numOfPlanes);
-    
-    for (int i = 0; i < bsp->m_numOfPlanes; ++i)
+    for (int i = 0; i < bsp->m_planes.size(); ++i)
     {
-        pImpl->m_planes[i].init(bsp->m_pPlanes[i]);
+        pImpl->m_planes[i].init(bsp->m_planes[i]);
     }
     
-    pImpl->m_textures.resize(bsp->m_numTextures);
+    pImpl->m_textures.resize(bsp->m_textures.size());
     
-    for (int i = 0; i < bsp->m_numTextures; ++i)
+    for (int i = 0; i < bsp->m_textures.size(); ++i)
     {
-        pImpl->m_textures[i] = bsp->pTextures[i].contents;
+        pImpl->m_textures[i] = bsp->m_textures[i].contents;
     }
 }
 
@@ -143,23 +137,6 @@ void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm:
     
     result.startsolid = work.startsolid;
     result.allsolid = work.allsolid;
-}
-
-//void Q3BspCollision::check(const glm::vec3 &start, const glm::vec3 &end, const AABB &aabb) const
-//{
-//    trace_work work;
-//    
-//    pImpl->trace(work, start, end, aabb.mins, aabb.maxs);
-//    
-//    printf("trace (frac = %.1f)\n", work.frac);
-//}
-
-Q3BspCollision::~Q3BspCollision()
-{
-    if (pImpl != nullptr)
-    {
-        delete pImpl;
-    }
 }
 
 void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs)
@@ -419,3 +396,4 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
         work.normal = closest_plane->normal;
     }
 }
+

@@ -23,6 +23,9 @@
 
 
 #define FACE_POLYGON 1
+#define FACE_PATCH 2
+#define FACE_MESH 3
+#define FACE_FX 4
 
 static Quake3BSP* g_bsp = nullptr;
 static Shader shader;
@@ -35,7 +38,7 @@ void Q3BspMesh::initFromBsp(Quake3BSP* bsp)
     g_bsp = bsp;
     
     TextureAtlas atlas;
-    atlas.initFromQ3Lightmaps(bsp->pLightmaps, bsp->m_numLightmaps);
+    atlas.initFromQ3Lightmaps(bsp->m_lightmaps);
 //    g_atlas.saveToPng("lightmap.png");
     
     adjastLightmapCoords(bsp, atlas);
@@ -51,24 +54,24 @@ void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas)
 {
     std::unordered_map<int, bool> processedVertices;
     
-    for (int i = 0; i < bsp->m_numFaces; ++i)
+    for (int i = 0; i < bsp->m_faces.size(); ++i)
     {
-        const tBSPFace &face = bsp->m_pFaces[i];
+        const tBSPFace &face = bsp->m_faces[i];
         
-        if (face.type != FACE_POLYGON) continue;
+        if (face.type != FACE_POLYGON && face.type != FACE_MESH) continue;
         if (face.lightmapID == -1) continue;
         
         const TextureTile &tile = atlas.tiles[face.lightmapID];
         
         for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
         {
-            unsigned int index = bsp->m_pIndices[j] + face.startVertIndex;
+            unsigned int index = bsp->m_indices[j] + face.startVertIndex;
             
             if (processedVertices[index]) {
                 continue;
             }
             
-            tBSPVertex &vertex = bsp->m_pVerts[index];
+            tBSPVertex& vertex = bsp->m_verts[index];
             
             vertex.vLightmapCoord.x = (vertex.vLightmapCoord.x * tile.width + tile.x) / atlas.width;
             vertex.vLightmapCoord.y = (vertex.vLightmapCoord.y * tile.height + tile.y) / atlas.height;
@@ -99,16 +102,14 @@ GLuint generateLightmap(const TextureAtlas& atlas)
 
 void Q3BspMesh::GenerateTexture()
 {
-    GLuint textureID;
-    int    width, height;
-    int    num_channels = 3;
+    int width, height;
+    int num_channels = 3;
 
-    GLuint missing_id = 1;
+    GLuint missing_id;
     glGenTextures(1, &missing_id); // generate missing texture
 
     unsigned char* image = stbi_load("assets/textures/_engine/missing.png", &width, &height, &num_channels, 3);
 
-    // glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, aniso);
     glBindTexture(GL_TEXTURE_2D, missing_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -121,10 +122,10 @@ void Q3BspMesh::GenerateTexture()
 
     std::vector<GLuint> missing_tex_id;
 
-    for (int i = 0; i < g_bsp->m_numTextures; i++)
+    for (int i = 0; i < g_bsp->m_textures.size(); i++)
     {
         std::string path = "assets/";
-        path.append(g_bsp->pTextures[i].strName);
+        path.append(g_bsp->m_textures[i].strName);
         
         unsigned char* image = nullptr;
         
@@ -139,6 +140,7 @@ void Q3BspMesh::GenerateTexture()
 
         if (image)
         {
+            GLuint textureID;
             glGenTextures(1, &textureID);
             glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -172,15 +174,15 @@ void Q3BspMesh::initBuffers()
 {
     std::unordered_map<int, std::vector<int>> indicesByTexture;
     
-    for (int i = 0; i < g_bsp->m_numFaces; ++i)
+    for (int i = 0; i < g_bsp->m_faces.size(); ++i)
     {
-        const tBSPFace &face = g_bsp->m_pFaces[i];
+        const tBSPFace &face = g_bsp->m_faces[i];
         
-        if (face.type != FACE_POLYGON) continue;
+        if (face.type != FACE_POLYGON && face.type != FACE_MESH) continue;
         
         for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
         {
-            unsigned int index = g_bsp->m_pIndices[j] + face.startVertIndex;
+            unsigned int index = g_bsp->m_indices[j] + face.startVertIndex;
             indicesByTexture[face.textureID].push_back(index);
         }
     }
@@ -204,7 +206,7 @@ void Q3BspMesh::initBuffers()
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(tBSPVertex) * g_bsp->m_numVerts, g_bsp->m_pVerts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tBSPVertex) * g_bsp->m_verts.size(), g_bsp->m_verts.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(VERT_POSITION_LOC);
     glVertexAttribPointer(VERT_POSITION_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), 0);

@@ -1,47 +1,24 @@
 #pragma once
 
+#include <vector>
+#include <string>
+
 #include "Quake3Types.h"
 
 struct Quake3BSP
 {
-    Quake3BSP();
-    ~Quake3BSP();
+    bool initFromFile(const std::string& filename);
     
-    bool initFromFile(const char* filename);
-    
-    char* m_pEntities;
-    int m_numEntities;
-
-    tBSPFace* m_pFaces;
-    int m_numFaces;
-    
-    int* m_pIndices;
-    int m_numIndices;
-    
-    tBSPVertex* m_pVerts;
-    int m_numVerts;
-    
-    tBSPTexture* pTextures;
-    int m_numTextures;
-    
-    tBSPLightmap* pLightmaps;
-    int m_numLightmaps;
-    
-    tBSPNode *m_pNodes;
-    int m_numOfNodes;
-    
-    tBSPLeaf *m_pLeafs;
-    int m_numOfLeafs;
-    
-    tBSPPlane *m_pPlanes;
-    int m_numOfPlanes;
-    
-    tBSPBrush *m_pBrushes;
-    int m_numOfBrushes;
-    
-    tBSPBrushSide *m_pBrushSides;
-    int m_numOfBrushSides;
-    
-    int *m_pLeafBrushes;
-    int m_numOfLeafBrushes;
+    std::string m_entities;
+    std::vector<tBSPFace> m_faces;
+    std::vector<int> m_indices;
+    std::vector<tBSPVertex> m_verts;
+    std::vector<tBSPTexture> m_textures;
+    std::vector<tBSPLightmap> m_lightmaps;
+    std::vector<tBSPNode> m_nodes;
+    std::vector<tBSPLeaf> m_leafs;
+    std::vector<tBSPPlane> m_planes;
+    std::vector<tBSPBrush> m_brushes;
+    std::vector<tBSPBrushSide> m_brushSides;
+    std::vector<int> m_leafBrushes;
 };

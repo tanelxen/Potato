@@ -21,7 +21,7 @@ struct TextureAtlas
 {
     ~TextureAtlas();
     
-    void initFromQ3Lightmaps(tBSPLightmap* lightmaps, int lenght);
+    void initFromQ3Lightmaps(const std::vector<tBSPLightmap>& lightmaps);
     void saveToPng(const std::string &filename);
     
     std::vector<TextureTile> tiles;

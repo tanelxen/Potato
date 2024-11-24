@@ -44,7 +44,7 @@ void Q3MapScene::loadMap(const std::string &filename)
     m_pPlayer = new Player(window, m_pMovement);
     
     KeyValueCollection entities;
-    entities.initFromString(bsp.m_pEntities);
+    entities.initFromString(bsp.m_entities);
     
     auto spawnPoints = entities.getAllWithKeyValue("classname", "info_player_deathmatch");
     

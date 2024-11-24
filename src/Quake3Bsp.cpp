@@ -24,174 +24,93 @@ enum eLumps {
     kMaxLumps      // A constant to store the number of lumps
 };
 
-bool Quake3BSP::initFromFile(const char* filename)
+bool Quake3BSP::initFromFile(const std::string& filename)
 {
-    if (!filename) {
-        printf("ERROR:: You must specify BSP file as parameter");
-        return 0;
-    }
-
-    FILE* fp = NULL;
-    if ((fp = fopen(filename, "rb")) == NULL) {
-        printf("ERROR:: cannot open BSP file: %s\n", filename);
-        return 0;
+    FILE* fp = fopen(filename.c_str(), "rb" );
+    
+    if(fp == nullptr) {
+        printf("unable to open %s\n", filename.c_str());
     }
 
     // Initialize the header and lump structures
-    tBSPHeader header = {0};
-    tBSPLump   lumps[kMaxLumps] = {0};
+    tBSPHeader header;
+    tBSPLump lumps[kMaxLumps];
 
     // Read in the header and lump data
     fread(&header, 1, sizeof(tBSPHeader), fp);
     fread(&lumps, kMaxLumps, sizeof(tBSPLump), fp);
     
-    m_numEntities = lumps[kEntities].length;
-    m_pEntities = new char[m_numEntities];
+    int numEntities = lumps[kEntities].length;
+    m_entities.resize(numEntities);
     fseek(fp, lumps[kEntities].offset, SEEK_SET);
-    fread(m_pEntities, m_numEntities, sizeof(char), fp);
+    fread(m_entities.data(), numEntities, sizeof(char), fp);
     
     // Faces
-    m_numFaces = lumps[kFaces].length / sizeof(tBSPFace);
-    m_pFaces = new tBSPFace[m_numFaces];
+    int numFaces = lumps[kFaces].length / sizeof(tBSPFace);
+    m_faces.resize(numFaces);
     fseek(fp, lumps[kFaces].offset, SEEK_SET);
-    fread(m_pFaces, m_numFaces, sizeof(tBSPFace), fp);
+    fread(m_faces.data(), numFaces, sizeof(tBSPFace), fp);
 
     // Indices
-    m_numIndices = lumps[kIndices].length / sizeof(int);
-    m_pIndices = new int[m_numIndices];
+    int numIndices = lumps[kIndices].length / sizeof(int);
+    m_indices.resize(numIndices);
     fseek(fp, lumps[kIndices].offset, SEEK_SET);
-    fread(m_pIndices, m_numIndices, sizeof(int), fp);
+    fread(m_indices.data(), numIndices, sizeof(int), fp);
 
     // Vertices
-    m_numVerts = lumps[kVertices].length / sizeof(tBSPVertex);
-    m_pVerts = new tBSPVertex[m_numVerts];
+    int numVerts = lumps[kVertices].length / sizeof(tBSPVertex);
+    m_verts.resize(numVerts);
     fseek(fp, lumps[kVertices].offset, SEEK_SET);
-    fread(m_pVerts, m_numVerts, sizeof(tBSPVertex), fp);
-
-//    // Swap from Quake to OpenGL coord system
-//    for (int i = 0; i < m_numVerts; i++)
-//    {
-//        float temp = m_pVerts[i].vPosition.y;
-//        m_pVerts[i].vPosition.y = m_pVerts[i].vPosition.z;
-//        m_pVerts[i].vPosition.z = -temp;
-//    }
+    fread(m_verts.data(), numVerts, sizeof(tBSPVertex), fp);
     
     // Textures (.shader filenames)
-    m_numTextures = lumps[kTextures].length / sizeof(tBSPTexture);
-    pTextures = new tBSPTexture[m_numTextures];
+    int numTextures = lumps[kTextures].length / sizeof(tBSPTexture);
+    m_textures.resize(numTextures);
     fseek(fp, lumps[kTextures].offset, SEEK_SET);
-    fread(pTextures, m_numTextures, sizeof(tBSPTexture), fp);
+    fread(m_textures.data(), numTextures, sizeof(tBSPTexture), fp);
 
     // Lightmap
-    m_numLightmaps = lumps[kLightmaps].length / sizeof(tBSPLightmap);
-    pLightmaps = new tBSPLightmap[m_numLightmaps];
+    int numLightmaps = lumps[kLightmaps].length / sizeof(tBSPLightmap);
+    m_lightmaps.resize(numLightmaps);
     fseek(fp, lumps[kLightmaps].offset, SEEK_SET);
-    fread(pLightmaps, m_numLightmaps, sizeof(tBSPLightmap), fp);
-    
+    fread(m_lightmaps.data(), numLightmaps, sizeof(tBSPLightmap), fp);
+
     // Nodes
-    m_numOfNodes = lumps[kNodes].length / sizeof(tBSPNode);
-    m_pNodes     = new tBSPNode [m_numOfNodes];
+    int numNodes = lumps[kNodes].length / sizeof(tBSPNode);
+    m_nodes.resize(numNodes);
     fseek(fp, lumps[kNodes].offset, SEEK_SET);
-    fread(m_pNodes, m_numOfNodes, sizeof(tBSPNode), fp);
+    fread(m_nodes.data(), numNodes, sizeof(tBSPNode), fp);
 
     // Leafs
-    m_numOfLeafs = lumps[kLeafs].length / sizeof(tBSPLeaf);
-    m_pLeafs     = new tBSPLeaf [m_numOfLeafs];
+    int numLeafs = lumps[kLeafs].length / sizeof(tBSPLeaf);
+    m_leafs.resize(numLeafs);
     fseek(fp, lumps[kLeafs].offset, SEEK_SET);
-    fread(m_pLeafs, m_numOfLeafs, sizeof(tBSPLeaf), fp);
-    
-//    // Now we need to go through and convert all the leaf bounding boxes
-//    // to the normal OpenGL Y up axis.
-//    for(int i = 0; i < m_numOfLeafs; i++)
-//    {
-//        // Swap the min y and z values, then negate the new Z
-//        int temp = m_pLeafs[i].mins.y;
-//        m_pLeafs[i].mins[2] = m_pLeafs[i].mins[3];
-//        m_pLeafs[i].mins[3] = -temp;
-//        
-//        // Swap the max y and z values, then negate the new Z
-//        temp = m_pLeafs[i].maxs.y;
-//        m_pLeafs[i].maxs[2] = m_pLeafs[i].maxs[3];
-//        m_pLeafs[i].maxs[3] = -temp;
-//    }
-    
+    fread(m_leafs.data(), numLeafs, sizeof(tBSPLeaf), fp);
+
     // Planes
-    m_numOfPlanes = lumps[kPlanes].length / sizeof(tBSPPlane);
-    m_pPlanes     = new tBSPPlane [m_numOfPlanes];
+    int numPlanes = lumps[kPlanes].length / sizeof(tBSPPlane);
+    m_planes.resize(numPlanes);
     fseek(fp, lumps[kPlanes].offset, SEEK_SET);
-    fread(m_pPlanes, m_numOfPlanes, sizeof(tBSPPlane), fp);
-    
-//    // Go through every plane and convert it's normal to the Y-axis being up
-//    for(int i = 0; i < m_numOfPlanes; i++)
-//    {
-//        float temp = m_pPlanes[i].normal.y;
-//        m_pPlanes[i].normal.y = m_pPlanes[i].normal.z;
-//        m_pPlanes[i].normal.z = -temp;
-//    }
+    fread(m_planes.data(), numPlanes, sizeof(tBSPPlane), fp);
     
     // Brushes
-    m_numOfBrushes = lumps[kBrushes].length / sizeof(int);
-    m_pBrushes     = new tBSPBrush [m_numOfBrushes];
+    int numBrushes = lumps[kBrushes].length / sizeof(int);
+    m_brushes.resize(numBrushes);
     fseek(fp, lumps[kBrushes].offset, SEEK_SET);
-    fread(m_pBrushes, m_numOfBrushes, sizeof(tBSPBrush), fp);
+    fread(m_brushes.data(), numBrushes, sizeof(tBSPBrush), fp);
     
     // Brush sides
-    m_numOfBrushSides = lumps[kBrushSides].length / sizeof(int);
-    m_pBrushSides     = new tBSPBrushSide [m_numOfBrushSides];
+    int numBrushSides = lumps[kBrushSides].length / sizeof(int);
+    m_brushSides.resize(numBrushSides);
     fseek(fp, lumps[kBrushSides].offset, SEEK_SET);
-    fread(m_pBrushSides, m_numOfBrushSides, sizeof(tBSPBrushSide), fp);
+    fread(m_brushSides.data(), numBrushSides, sizeof(tBSPBrushSide), fp);
     
     // Leaf brushes
-    m_numOfLeafBrushes = lumps[kLeafBrushes].length / sizeof(int);
-    m_pLeafBrushes     = new int [m_numOfLeafBrushes];
+    int numLeafBrushes = lumps[kLeafBrushes].length / sizeof(int);
+    m_leafBrushes.resize(numLeafBrushes);
     fseek(fp, lumps[kLeafBrushes].offset, SEEK_SET);
-    fread(m_pLeafBrushes, m_numOfLeafBrushes, sizeof(int), fp);
+    fread(m_leafBrushes.data(), numLeafBrushes, sizeof(int), fp);
 
     fclose(fp);
     return (fp);
-}
-
-Quake3BSP::Quake3BSP()
-{
-    m_numEntities = 0;
-    m_numVerts = 0;
-    m_numFaces = 0;
-    m_numIndices = 0;
-    m_numTextures = 0;
-    m_numLightmaps = 0;
-    m_numOfNodes = 0;
-    m_numOfLeafs = 0;
-    m_numOfPlanes = 0;
-    m_numOfBrushes = 0;
-    m_numOfBrushSides = 0;
-    m_numOfLeafBrushes = 0;
-
-    m_pEntities = nullptr;
-    m_pVerts = nullptr;
-    m_pFaces = nullptr;
-    m_pIndices = nullptr;
-    pTextures = nullptr;
-    pLightmaps = nullptr;
-    m_pNodes = nullptr;
-    m_pLeafs = nullptr;
-    m_pPlanes = nullptr;
-    m_pBrushes = nullptr;
-    m_pBrushSides = nullptr;
-    m_pLeafBrushes = nullptr;
-}
-
-Quake3BSP::~Quake3BSP()
-{
-    delete[] m_pEntities;
-    delete[] m_pVerts;
-    delete[] m_pFaces;
-    delete[] m_pIndices;
-    delete[] pTextures;
-    delete[] pLightmaps;
-    delete[] m_pNodes;
-    delete[] m_pLeafs;
-    delete[] m_pPlanes;
-    delete[] m_pBrushes;
-    delete[] m_pBrushSides;
-    delete[] m_pLeafBrushes;
 }

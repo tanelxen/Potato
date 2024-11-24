@@ -14,11 +14,11 @@
 #define LIGHTMAP_SIZE 128
 #define NUM_COMPONENTS 3
 
-void TextureAtlas::initFromQ3Lightmaps(tBSPLightmap *lightmaps, int length)
+void TextureAtlas::initFromQ3Lightmaps(const std::vector<tBSPLightmap>& lightmaps)
 {
-    if (lightmaps == nullptr) return;
+    if (lightmaps.empty()) return;
 
-    int gridSize = ceil(sqrt(length));                      // количество плиток по одной стороне
+    int gridSize = ceil(sqrt(lightmaps.size()));            // количество плиток по одной стороне
     int dim = gridSize * LIGHTMAP_SIZE;                     // ширина и высота атласа
     size_t tileRowSize = LIGHTMAP_SIZE * NUM_COMPONENTS;    // байтов в одной строке тайла (128 пикселей * 3 байта на пиксель)
 
@@ -30,7 +30,7 @@ void TextureAtlas::initFromQ3Lightmaps(tBSPLightmap *lightmaps, int length)
 
     int xOffset = 0, yOffset = 0;
 
-    for (int i = 0; i < length; ++i)
+    for (int i = 0; i < lightmaps.size(); ++i)
     {
         TextureTile& tile = tiles.emplace_back();
 
