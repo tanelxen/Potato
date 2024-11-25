@@ -47,7 +47,13 @@ void Q3MapScene::loadMap(const std::string &filename)
     KeyValueCollection entities;
     entities.initFromString(bsp.m_entities);
     
-    auto spawnPoints = entities.getAllWithKeyValue("classname", "info_player_deathmatch");
+    auto info_player_deathmatch = entities.getAllWithKeyValue("classname", "info_player_deathmatch");
+    auto info_player_start = entities.getAllWithKeyValue("classname", "info_player_start");
+    auto ai_soldier = entities.getAllWithKeyValue("classname", "ai_soldier");
+    
+    auto spawnPoints = info_player_deathmatch;
+    spawnPoints.insert(spawnPoints.end(), info_player_start.begin(), info_player_start.end());
+    spawnPoints.insert(spawnPoints.end(), ai_soldier.begin(), ai_soldier.end());
     
     for (int i = 0; i < spawnPoints.size(); ++i)
     {

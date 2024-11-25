@@ -58,7 +58,7 @@ void GoldSrcMesh::uploadTextures(const std::vector<GoldSrc::Texture> &textures)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, item.width, item.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, item.data.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, item.width, item.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, item.data.data());
         glGenerateMipmap(GL_TEXTURE_2D);
         
         this->textures[i] = id;

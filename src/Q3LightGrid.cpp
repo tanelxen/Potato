@@ -10,6 +10,8 @@
 #include "Q3LightGrid.h"
 #include "Quake3Bsp.h"
 
+#define radians(deg) ((deg) * (M_PI / 180.0f))
+
 using std::min, std::max;
 
 void Q3LightGrid::init(const Quake3BSP& q3bsp)
@@ -22,18 +24,35 @@ void Q3LightGrid::init(const Quake3BSP& q3bsp)
     lightVolSizeZ = floor(maxs.z / 128) - ceil(mins.z / 128) + 1;
     
     ambients.resize(q3bsp.m_lightVolumes.size());
+    directionals.resize(q3bsp.m_lightVolumes.size());
+    dirs.resize(q3bsp.m_lightVolumes.size());
     
     for (int i = 0; i < q3bsp.m_lightVolumes.size(); ++i)
     {
-        ambients[i].r = float(q3bsp.m_lightVolumes[i].ambient[0]) / 255.0;
-        ambients[i].g = float(q3bsp.m_lightVolumes[i].ambient[1]) / 255.0;
-        ambients[i].b = float(q3bsp.m_lightVolumes[i].ambient[2]) / 255.0;
+        const auto& cell = q3bsp.m_lightVolumes[i];
+        
+        ambients[i].r = cell.ambient[0] / 255.0;
+        ambients[i].g = cell.ambient[1] / 255.0;
+        ambients[i].b = cell.ambient[2] / 255.0;
+        
+        directionals[i].r = cell.directional[0] / 255.0;
+        directionals[i].g = cell.directional[1] / 255.0;
+        directionals[i].b = cell.directional[2] / 255.0;
+        
+        float lattitude = radians(cell.dir[1] * 360.0 / 255.0);
+        float longitude = radians(cell.dir[0] * 360.0 / 255.0);
+        
+        dirs[i] = {
+            cos(lattitude) * sin(longitude),
+            sin(lattitude) * sin(longitude),
+            cos(longitude)
+        };
     }
 }
 
-glm::vec3 Q3LightGrid::getAmbient(const glm::vec3& pos)
+void Q3LightGrid::getValue(const glm::vec3& pos, glm::vec3& ambient, glm::vec3& color, glm::vec3& dir)
 {
-    if (ambients.empty()) return glm::vec3{0};
+    if (ambients.empty()) return;
     
     int cellX = floor(pos.x / 64) - ceil(mins.x / 64) + 1;
     int cellY = floor(pos.y / 64) - ceil(mins.y / 64) + 1;
@@ -41,11 +60,11 @@ glm::vec3 Q3LightGrid::getAmbient(const glm::vec3& pos)
     
     int index = indexForCell(cellX, cellY, cellZ);
 
-    if (index >= ambients.size()) return glm::vec3{0};
+    if (index >= ambients.size()) return;
     
-    auto result = ambients[index];
-
-    return result;
+    ambient = ambients[index];
+    color = directionals[index];
+    dir = dirs[index];
 }
 
 int Q3LightGrid::indexForCell(int x, int y, int z)

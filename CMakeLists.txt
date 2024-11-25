@@ -24,7 +24,6 @@ add_executable( ${PROJECT_NAME}
         #vendor/imgui/backends/imgui_impl_glfw.cpp
         #vendor/imgui/backends/imgui_impl_opengl3.cpp
         vendor/stb_image.h
-        #vendor/stb_image_write.h
 
         #src/imguiStyling.cpp
         src/Shader.cpp
@@ -34,16 +33,6 @@ add_executable( ${PROJECT_NAME}
         src/Quake3Bsp.cpp
         src/Quake3Bsp.h
         src/Quake3Types.h
-        #src/Grid.cpp
-        #src/Grid.h
-        #src/Cube.cpp
-        #src/Cube.h
-        #src/BrushTool.cpp
-        #src/BrushTool.h
-        #src/World.cpp
-        #src/World.h
-        #src/CubeGeometry.cpp
-        #src/CubeGeometry.h
         src/Q3BspMesh.cpp
         src/Q3BspMesh.h
         src/KeyValueCollection.cpp

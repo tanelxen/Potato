@@ -16,7 +16,7 @@ struct Q3LightGrid
 {
     void init(const Quake3BSP& q3bsp);
     
-    glm::vec3 getAmbient(const glm::vec3& point);
+    void getValue(const glm::vec3& pos, glm::vec3& ambient, glm::vec3& color, glm::vec3& dir);
     
 private:
     glm::vec3 maxs;
@@ -27,6 +27,8 @@ private:
     int lightVolSizeZ;
     
     std::vector<glm::vec3> ambients;
+    std::vector<glm::vec3> directionals;
+    std::vector<glm::vec3> dirs;
     
     int indexForCell(int x, int y, int z);
 };

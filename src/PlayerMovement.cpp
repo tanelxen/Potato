@@ -74,17 +74,21 @@ void PlayerMovement::setInputMovement(int forward, int right, bool jump)
 
 void PlayerMovement::update(float dt)
 {
-    trace_ground();
-    apply_inputs(dt);
-
     if (!noclip)
     {
+        trace_ground();
+        apply_inputs(dt);
+        
         bool gravity = (m_movementBits & MOVEMENT_JUMPING) != 0;
         step_slide(gravity, dt);
     }
     else
     {
-        m_position += velocity * dt;
+        glm::vec3 direction = {0, 0, 0};
+        direction += m_forward * m_forwardmove * cl_forwardspeed;
+        direction += m_right * m_rightmove * cl_forwardspeed;
+        
+        m_position += direction * dt;
     }
 
     m_movementBits &= ~MOVEMENT_JUMP_THIS_FRAME;

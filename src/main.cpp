@@ -75,8 +75,6 @@ int main()
     glfwSwapInterval(0);
 
     glFrontFace(GL_CCW);
-    
-    glEnable(GL_FRAMEBUFFER_SRGB);
 
     while (!glfwWindowShouldClose(window))
     {

@@ -41,26 +41,29 @@ void StudioRenderer::draw(Camera *camera)
         
         model = glm::translate(model, inst.position);
         model = glm::rotate(model, inst.yaw, glm::vec3(0, 0, 1));
-//        model = glm::scale(model, glm::vec3(1.1));
-        
-//        glm::mat4 quakeToGL = {
-//             0,  0, -1,  0,
-//            -1,  0,  0,  0,
-//             0,  1,  0,  0,
-//             0,  0,  0,  1
-//        };
         
         glm::vec3 ambient = glm::vec3{1};
+        glm::vec3 color = glm::vec3{1};
+        glm::vec3 dir = glm::vec3{0};
         
         if (m_lightGrid != nullptr)
         {
-            ambient = m_lightGrid->getAmbient(inst.position + glm::vec3{0, 0, 24});
+            glm::vec3 pos = inst.position;
+            pos.z += 24;
+            
+            m_lightGrid->getValue(pos, ambient, color, dir);
         }
         
         m_shader.setUniform("u_ambient", ambient);
+        m_shader.setUniform("u_color", color);
+        m_shader.setUniform("u_dir", dir);
         
-        glm::mat4 mvp = camera->projection * camera->view * model;// * quakeToGL;
+        // Model matrix uses for rotate normals
+        m_shader.setUniform("uModel", model);
+        
+        glm::mat4 mvp = camera->projection * camera->view * model;
         m_shader.setUniform("uMVP", mvp);
+        
         
         m_shader.setUniform("uBoneTransforms", inst.animator.getBoneTransforms());
         
@@ -80,13 +83,24 @@ void StudioRenderer::drawWeapon(Camera *camera)
     };
     
     glm::vec3 ambient = glm::vec3{1};
+    glm::vec3 color = glm::vec3{1};
+    glm::vec3 dir = glm::vec3{0};
     
     if (m_lightGrid != nullptr)
     {
-        ambient = m_lightGrid->getAmbient(camera->getPosition());
+        glm::vec3 pos = camera->getPosition();
+        
+        m_lightGrid->getValue(pos, ambient, color, dir);
     }
     
+    dir = glm::mat3(camera->view) * dir;
+    
     m_shader.setUniform("u_ambient", ambient);
+    m_shader.setUniform("u_color", color);
+    m_shader.setUniform("u_dir", dir);
+    
+    // Model matrix uses for rotate normals
+    m_shader.setUniform("uModel", quakeToGL);
     
     glm::mat4 mvp = camera->weaponProjection * quakeToGL;
     m_shader.setUniform("uMVP", mvp);
