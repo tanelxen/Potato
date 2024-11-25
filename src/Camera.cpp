@@ -74,5 +74,12 @@ Ray Camera::getMousePosInWorld() const
 void Camera::setTransform(const glm::vec3 &position, const glm::vec3 &forward, const glm::vec3 &right, const glm::vec3 &up)
 {
     view = glm::lookAt(position, position + forward, up);
+    m_position = position;
 }
+
+glm::vec3 Camera::getPosition() const
+{
+    return m_position;
+}
+
 

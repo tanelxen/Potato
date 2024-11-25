@@ -70,6 +70,9 @@ add_executable( ${PROJECT_NAME}
         
         src/Q3Bezier.cpp
         src/Q3Bezier.h
+        
+        src/Q3LightGrid.cpp
+        src/Q3LightGrid.h
 )
 
 

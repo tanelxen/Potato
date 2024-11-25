@@ -112,6 +112,18 @@ bool Quake3BSP::initFromFile(const std::string& filename)
     fseek(fp, lumps[kLeafBrushes].offset, SEEK_SET);
     fread(m_leafBrushes.data(), numLeafBrushes, sizeof(int), fp);
     
+    // Models
+    int numModels = lumps[kModels].length / sizeof(tBSPModel);
+    m_models.resize(numModels);
+    fseek(fp, lumps[kModels].offset, SEEK_SET);
+    fread(m_models.data(), numModels, sizeof(tBSPModel), fp);
+    
+    // Light volumes
+    int numLightVolumes = lumps[kLightVolumes].length / sizeof(tBSPLightVolume);
+    m_lightVolumes.resize(numLightVolumes);
+    fseek(fp, lumps[kLightVolumes].offset, SEEK_SET);
+    fread(m_lightVolumes.data(), numLightVolumes, sizeof(tBSPLightVolume), fp);
+    
     tesselateBezierPatches(m_faces, m_verts, m_indices, 9);
 
     fclose(fp);

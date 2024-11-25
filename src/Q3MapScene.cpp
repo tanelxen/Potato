@@ -17,6 +17,7 @@
 #include <GLFW/glfw3.h>
 
 #include "StudioRenderer.h"
+#include "Q3LightGrid.h"
 
 #define degrees(rad) ((rad) * (180.0f / M_PI))
 #define radians(deg) ((deg) * (M_PI / 180.0f))
@@ -67,16 +68,12 @@ void Q3MapScene::loadMap(const std::string &filename)
         
         if (spawnPoint.getVec3Value("origin", origin))
         {
-//            position.x = origin.x;
-//            position.y = origin.z;
-//            position.z = -origin.y;
-            
             position = origin;
         }
         
         if (i == 0)
         {
-            m_pPlayer->position = position + glm::vec3{0, 0, 8};
+            m_pPlayer->position = position + glm::vec3{0, 0, 0.25};
             m_pPlayer->yaw = yaw;
             m_pPlayer->pitch = 0;
         }
@@ -89,6 +86,9 @@ void Q3MapScene::loadMap(const std::string &filename)
     }
     
     m_mesh.initFromBsp(&bsp);
+    
+    studio->m_lightGrid = new Q3LightGrid();
+    studio->m_lightGrid->init(bsp);
 }
 
 void Q3MapScene::update(float dt)
@@ -99,7 +99,7 @@ void Q3MapScene::update(float dt)
     m_pPlayer->update(dt);
     
     glm::vec3 camera_pos = m_pPlayer->position;
-    camera_pos.z += 38;
+    camera_pos.z += 40;
     
     m_pCamera->setTransform(camera_pos, m_pPlayer->forward, m_pPlayer->right, m_pPlayer->up);
     

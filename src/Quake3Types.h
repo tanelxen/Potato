@@ -101,3 +101,20 @@ struct tBSPBrushSide
     int plane;                    // The plane index
     int textureID;                // The texture index
 };
+
+struct tBSPModel
+{
+    glm::vec3 min;          // The min position for the bounding box
+    glm::vec3 max;          // The max position for the bounding box.
+    int faceIndex;          // The first face index in the model
+    int numOfFaces;         // The number of faces in the model
+    int brushIndex;         // The first brush index in the model
+    int numOfBrushes;       // The number brushes for the model
+};
+
+struct tBSPLightVolume
+{
+    byte ambient[3];
+    byte directional[3];
+    byte dir[2];
+};

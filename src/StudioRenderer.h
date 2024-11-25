@@ -13,6 +13,7 @@
 #include "GoldSrcModel.h"
 
 class Camera;
+struct Q3LightGrid;
 
 struct StudioRenderer
 {
@@ -23,6 +24,8 @@ struct StudioRenderer
     void update(float dt);
     void draw(Camera* camera);
     void drawWeapon(Camera* camera);
+    
+    Q3LightGrid* m_lightGrid = nullptr;
     
 private:
     Shader m_shader;

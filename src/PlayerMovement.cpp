@@ -27,8 +27,8 @@ static int MAX_CLIP_PLANES = 5;
 static float OVERCLIP = 1.001;
 static float STEPSIZE = 18;
 
-static glm::vec3 player_mins = { -15, -15, -28 };
-static glm::vec3 player_maxs = { 15, 15, 28 };
+static glm::vec3 player_mins = { -15, -15, -24 };
+static glm::vec3 player_maxs = { 15, 15, 32 };
 
 enum movement_bits
 {
@@ -96,7 +96,7 @@ void PlayerMovement::update(float dt)
 void PlayerMovement::trace_ground()
 {
     glm::vec3 point = m_position;
-    point.z -= 16;
+    point.z -= 0.25;
     
     HitResult result;
     m_pCollision->trace(result, m_position, point, player_mins, player_maxs);

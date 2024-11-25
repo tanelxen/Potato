@@ -10,6 +10,8 @@
 #include "StudioRenderer.h"
 #include "Camera.h"
 
+#include "Q3LightGrid.h"
+
 StudioRenderer::StudioRenderer()
 {
     m_shader.init("assets/shaders/goldsrc_model.glsl");
@@ -48,6 +50,15 @@ void StudioRenderer::draw(Camera *camera)
 //             0,  0,  0,  1
 //        };
         
+        glm::vec3 ambient = glm::vec3{1};
+        
+        if (m_lightGrid != nullptr)
+        {
+            ambient = m_lightGrid->getAmbient(inst.position + glm::vec3{0, 0, 24});
+        }
+        
+        m_shader.setUniform("u_ambient", ambient);
+        
         glm::mat4 mvp = camera->projection * camera->view * model;// * quakeToGL;
         m_shader.setUniform("uMVP", mvp);
         
@@ -67,6 +78,15 @@ void StudioRenderer::drawWeapon(Camera *camera)
          0,  1,  0,   0,
          0,  0,  0.5, 1
     };
+    
+    glm::vec3 ambient = glm::vec3{1};
+    
+    if (m_lightGrid != nullptr)
+    {
+        ambient = m_lightGrid->getAmbient(camera->getPosition());
+    }
+    
+    m_shader.setUniform("u_ambient", ambient);
     
     glm::mat4 mvp = camera->weaponProjection * quakeToGL;
     m_shader.setUniform("uMVP", mvp);
