@@ -24,11 +24,13 @@
 
 //static int oldMouseButtonState = GLFW_RELEASE;
 
-
 Q3MapScene::Q3MapScene(GLFWwindow* window, Camera *camera) : window(window), m_pCamera(camera)
 {
-    studio = new StudioRenderer();
+    studio = std::make_unique<StudioRenderer>();
+    m_pLightGrid = std::make_unique<Q3LightGrid>();
 }
+
+Q3MapScene::~Q3MapScene() = default;
 
 void Q3MapScene::loadMap(const std::string &filename)
 {
@@ -40,9 +42,9 @@ void Q3MapScene::loadMap(const std::string &filename)
     
     m_collision.initFromBsp(&bsp);
     
-    m_pMovement = new PlayerMovement(&m_collision);
+    m_pMovement = std::make_unique<PlayerMovement>(&m_collision);
     
-    m_pPlayer = new Player(window, m_pMovement);
+    m_pPlayer = std::make_unique<Player>(window, m_pMovement.get());
     
     KeyValueCollection entities;
     entities.initFromString(bsp.m_entities);
@@ -93,8 +95,7 @@ void Q3MapScene::loadMap(const std::string &filename)
     
     m_mesh.initFromBsp(&bsp);
     
-    studio->m_lightGrid = new Q3LightGrid();
-    studio->m_lightGrid->init(bsp);
+    m_pLightGrid->init(bsp);
 }
 
 void Q3MapScene::update(float dt)
@@ -137,11 +138,11 @@ void Q3MapScene::draw()
     glm::mat4x4 mvp = m_pCamera->projection * m_pCamera->view;
     m_mesh.renderFaces(mvp);
     
-    studio->draw(m_pCamera);
+    studio->draw(m_pCamera, m_pLightGrid.get());
     
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    studio->drawWeapon(m_pCamera);
+    studio->drawWeapon(m_pCamera, m_pLightGrid.get());
 }
 
 

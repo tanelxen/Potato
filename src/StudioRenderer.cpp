@@ -31,7 +31,7 @@ void StudioRenderer::update(float dt)
     }
 }
 
-void StudioRenderer::draw(Camera *camera)
+void StudioRenderer::draw(Camera* camera, Q3LightGrid* lightGrid)
 {
     m_shader.bind();
     
@@ -46,12 +46,12 @@ void StudioRenderer::draw(Camera *camera)
         glm::vec3 color = glm::vec3{1};
         glm::vec3 dir = glm::vec3{0};
         
-        if (m_lightGrid != nullptr)
+        if (lightGrid != nullptr)
         {
             glm::vec3 pos = inst.position;
             pos.z += 24;
             
-            m_lightGrid->getValue(pos, ambient, color, dir);
+            lightGrid->getValue(pos, ambient, color, dir);
         }
         
         m_shader.setUniform("u_ambient", ambient);
@@ -71,7 +71,7 @@ void StudioRenderer::draw(Camera *camera)
     }
 }
 
-void StudioRenderer::drawWeapon(Camera *camera)
+void StudioRenderer::drawWeapon(Camera* camera, Q3LightGrid* lightGrid)
 {
     m_shader.bind();
     
@@ -86,11 +86,11 @@ void StudioRenderer::drawWeapon(Camera *camera)
     glm::vec3 color = glm::vec3{1};
     glm::vec3 dir = glm::vec3{0};
     
-    if (m_lightGrid != nullptr)
+    if (lightGrid != nullptr)
     {
         glm::vec3 pos = camera->getPosition();
         
-        m_lightGrid->getValue(pos, ambient, color, dir);
+        lightGrid->getValue(pos, ambient, color, dir);
     }
     
     dir = glm::mat3(camera->view) * dir;
@@ -135,8 +135,15 @@ GoldSrcModel* StudioRenderer::makeModel(const std::string& filename)
 
 GoldSrcModelInstance* StudioRenderer::makeModelInstance(const std::string& filename)
 {
+    auto index = m_instances.size();
+    
     GoldSrcModelInstance& modelInstance = m_instances.emplace_back();
     modelInstance.m_pmodel = makeModel(filename);
+    
+    auto count = modelInstance.m_pmodel->animation.sequences.size();
+    int seqIndex = (int) index % count;
+    
+    modelInstance.animator.setSeqIndex(seqIndex);
     
     return &modelInstance;
 }

@@ -22,10 +22,8 @@ struct StudioRenderer
     GoldSrcModelInstance* makeModelInstance(const std::string& filename);
     
     void update(float dt);
-    void draw(Camera* camera);
-    void drawWeapon(Camera* camera);
-    
-    Q3LightGrid* m_lightGrid = nullptr;
+    void draw(Camera* camera, Q3LightGrid* lightGrid);
+    void drawWeapon(Camera* camera, Q3LightGrid* lightGrid);
     
 private:
     Shader m_shader;
@@ -35,5 +33,6 @@ private:
     
     std::unique_ptr<GoldSrcModelInstance> m_player;
     
+    // May use for pre-caching
     GoldSrcModel* makeModel(const std::string& filename);
 };
