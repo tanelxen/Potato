@@ -5,9 +5,11 @@
 //  Created by Fedor Artemenkov on 03.11.24.
 //
 
-#include "Player.h"
 #include <GLFW/glfw3.h>
+
+#include "Player.h"
 #include "PlayerMovement.h"
+#include "StudioRenderer.h"
 
 Player::Player(GLFWwindow *window, PlayerMovement *movement) : m_pWindow(window), m_pMovement(movement)
 {
@@ -90,6 +92,7 @@ void Player::update(float dt)
     
     position = m_pMovement->getPosition();
     
+    m_pModelInstance->animator.update(dt);
     
 //    float moveSpeed = 96;
 //    

@@ -54,22 +54,25 @@ struct GoldSrcAnimator
     void setSeqIndex(int index);
     int getSeqIndex() const;
     
+    int getNumSeq() const;
+    
+    void update(float dt);
+    
 private:
     float cur_frame = 0;
     float cur_frame_time = 0;
     float cur_anim_duration = 0;
     int cur_seq_index = 0;
     
+    // Only StudioRenderer can set animation pointer and get bone matrices
+    friend struct StudioRenderer;
+    
+    GoldSrcAnimation* m_pAnimation = nullptr;
+    
     // Transforms for each bone
     std::vector<glm::mat4> transforms;
     
-    void updatePose(const GoldSrcAnimation& animation);
-    
-    // Only StudioRenderer can update animators
-    friend struct StudioRenderer;
-    
-    void update(const GoldSrcAnimation& animation, float dt);
-    const std::vector<glm::mat4>& getBoneTransforms() const;
+    void updatePose();
 };
 
 // Instance with unique transforms and animation
@@ -83,5 +86,5 @@ struct GoldSrcModelInstance
 private:
     // Only StudioRenderer has access to GoldSrcModel
     friend struct StudioRenderer;
-    GoldSrcModel* m_pmodel;
+    GoldSrcModel* m_pmodel = nullptr;
 };

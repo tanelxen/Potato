@@ -115,8 +115,6 @@ void GoldSrcMesh::uploadMeshes(const std::vector<GoldSrc::Mesh> &meshes)
 
 void GoldSrcAnimator::setSeqIndex(int index)
 {
-//    if (index >= sequences.size()) return;
-    
     cur_seq_index = index;
     cur_frame_time = 0;
     cur_frame = 0;
@@ -127,15 +125,22 @@ int GoldSrcAnimator::getSeqIndex() const
     return cur_seq_index;
 }
 
-void GoldSrcAnimator::update(const GoldSrcAnimation &animation, float dt)
+int GoldSrcAnimator::getNumSeq() const
 {
-    if (cur_seq_index >= animation.sequences.size()) return;
+    if (m_pAnimation == nullptr) return 0;
+    return (int) m_pAnimation->sequences.size();
+}
+
+void GoldSrcAnimator::update(float dt)
+{
+    if (m_pAnimation == nullptr) return;
+    if (cur_seq_index >= m_pAnimation->sequences.size()) return;
     
-    const GoldSrc::Sequence& seq = animation.sequences[cur_seq_index];
+    const GoldSrc::Sequence& seq = m_pAnimation->sequences[cur_seq_index];
     
     cur_anim_duration = (float)seq.frames.size() / seq.fps;
     
-    updatePose(animation);
+    updatePose();
     
     cur_frame_time += dt;
     
@@ -147,19 +152,16 @@ void GoldSrcAnimator::update(const GoldSrcAnimation &animation, float dt)
     cur_frame = (float)seq.frames.size() * (cur_frame_time / cur_anim_duration);
 }
 
-const std::vector<glm::mat4>& GoldSrcAnimator::getBoneTransforms() const
+void GoldSrcAnimator::updatePose()
 {
-    return transforms;
-}
-
-void GoldSrcAnimator::updatePose(const GoldSrcAnimation& animation)
-{
-    if (transforms.size() < animation.bones.size())
+    if (m_pAnimation == nullptr) return;
+    
+    if (transforms.size() < m_pAnimation->bones.size())
     {
-        transforms.resize(animation.bones.size());
+        transforms.resize(m_pAnimation->bones.size());
     }
     
-    const GoldSrc::Sequence& seq = animation.sequences[cur_seq_index];
+    const GoldSrc::Sequence& seq = m_pAnimation->sequences[cur_seq_index];
     
     int currIndex = int(cur_frame);
     int nextIndex = (currIndex + 1) % seq.frames.size();
@@ -169,7 +171,7 @@ void GoldSrcAnimator::updatePose(const GoldSrcAnimation& animation)
     const GoldSrc::Frame& curr = seq.frames[currIndex];
     const GoldSrc::Frame& next = seq.frames[nextIndex];
     
-    for (int i = 0; i < animation.bones.size(); ++i)
+    for (int i = 0; i < m_pAnimation->bones.size(); ++i)
     {
         const glm::quat& currRotation = curr.rotationPerBone[i];
         const glm::quat& nextRotation = next.rotationPerBone[i];
@@ -187,9 +189,9 @@ void GoldSrcAnimator::updatePose(const GoldSrcAnimation& animation)
         transform[3][1] = position[1];
         transform[3][2] = position[2];
         
-        if (animation.bones[i] != -1)
+        if (m_pAnimation->bones[i] != -1)
         {
-            transform = transforms[animation.bones[i]] * transform;
+            transform = transforms[m_pAnimation->bones[i]] * transform;
         }
     }
 }

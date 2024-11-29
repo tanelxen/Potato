@@ -7,10 +7,12 @@
 
 #pragma once
 
+#include <memory>
 #include <glm/glm.hpp>
 
 struct GLFWwindow;
 class PlayerMovement;
+struct GoldSrcModelInstance;
 
 class Player
 {
@@ -27,6 +29,8 @@ public:
     
     float pitch = -0.5;
     float yaw = -1.57;
+    
+    std::unique_ptr<GoldSrcModelInstance> m_pModelInstance;
     
 private:
     GLFWwindow* m_pWindow;

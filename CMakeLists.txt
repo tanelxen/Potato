@@ -62,13 +62,16 @@ add_executable( ${PROJECT_NAME}
         
         src/Q3LightGrid.cpp
         src/Q3LightGrid.h
+        
+        src/Monster.cpp
+        src/Monster.h
 )
 
 
-set(SHADERS_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders")
-file(GLOB_RECURSE SHADER_FILES "${SHADERS_FOLDER}/*")
-source_group("Shaders" FILES ${SHADER_FILES})
-add_custom_target(Shaders SOURCES ${SHADER_FILES})
+#set(SHADERS_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders")
+#file(GLOB_RECURSE SHADER_FILES "${SHADERS_FOLDER}/*")
+#source_group("Shaders" FILES ${SHADER_FILES})
+#add_custom_target(Shaders SOURCES ${SHADER_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)
 

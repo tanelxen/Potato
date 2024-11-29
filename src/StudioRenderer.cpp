@@ -15,32 +15,28 @@
 StudioRenderer::StudioRenderer()
 {
     m_shader.init("assets/shaders/goldsrc_model.glsl");
-    
-    m_player = std::make_unique<GoldSrcModelInstance>();
-    m_player->m_pmodel = makeModel("assets/models/v_9mmhandgun.mdl");
-    m_player->animator.setSeqIndex(2);
 }
 
-void StudioRenderer::update(float dt)
+void StudioRenderer::queue(GoldSrcModelInstance* inst)
 {
-    m_player->animator.update(m_player->m_pmodel->animation, dt);
-    
-    for (auto& inst : m_instances)
-    {
-        inst.animator.update(inst.m_pmodel->animation, dt);
-    }
+    m_renderQueue.push_back(inst);
 }
 
-void StudioRenderer::draw(Camera* camera, Q3LightGrid* lightGrid)
+void StudioRenderer::queueViewModel(GoldSrcModelInstance* inst)
+{
+    m_renderQueueView.push_back(inst);
+}
+
+void StudioRenderer::drawRegular(Camera* camera, Q3LightGrid* lightGrid)
 {
     m_shader.bind();
     
-    for (auto& inst : m_instances)
+    for (const auto inst : m_renderQueue)
     {
         glm::mat4 model = glm::mat4(1);
         
-        model = glm::translate(model, inst.position);
-        model = glm::rotate(model, inst.yaw, glm::vec3(0, 0, 1));
+        model = glm::translate(model, inst->position);
+        model = glm::rotate(model, inst->yaw, glm::vec3(0, 0, 1));
         
         glm::vec3 ambient = glm::vec3{1};
         glm::vec3 color = glm::vec3{1};
@@ -48,7 +44,7 @@ void StudioRenderer::draw(Camera* camera, Q3LightGrid* lightGrid)
         
         if (lightGrid != nullptr)
         {
-            glm::vec3 pos = inst.position;
+            glm::vec3 pos = inst->position;
             pos.z += 24;
             
             lightGrid->getValue(pos, ambient, color, dir);
@@ -65,13 +61,15 @@ void StudioRenderer::draw(Camera* camera, Q3LightGrid* lightGrid)
         m_shader.setUniform("uMVP", mvp);
         
         
-        m_shader.setUniform("uBoneTransforms", inst.animator.getBoneTransforms());
+        m_shader.setUniform("uBoneTransforms", inst->animator.transforms);
         
-        inst.m_pmodel->mesh.draw();
+        inst->m_pmodel->mesh.draw();
     }
+    
+    m_renderQueue.clear();
 }
 
-void StudioRenderer::drawWeapon(Camera* camera, Q3LightGrid* lightGrid)
+void StudioRenderer::drawViewModels(Camera* camera, Q3LightGrid* lightGrid)
 {
     m_shader.bind();
     
@@ -82,32 +80,38 @@ void StudioRenderer::drawWeapon(Camera* camera, Q3LightGrid* lightGrid)
          0,  0,  0.5, 1
     };
     
-    glm::vec3 ambient = glm::vec3{1};
-    glm::vec3 color = glm::vec3{1};
-    glm::vec3 dir = glm::vec3{0};
-    
-    if (lightGrid != nullptr)
+    for (const auto inst : m_renderQueueView)
     {
-        glm::vec3 pos = camera->getPosition();
         
-        lightGrid->getValue(pos, ambient, color, dir);
+        glm::vec3 ambient = glm::vec3{1};
+        glm::vec3 color = glm::vec3{1};
+        glm::vec3 dir = glm::vec3{0};
+        
+        if (lightGrid != nullptr)
+        {
+            glm::vec3 pos = camera->getPosition();
+            
+            lightGrid->getValue(pos, ambient, color, dir);
+        }
+        
+        dir = glm::mat3(camera->view) * dir;
+        
+        m_shader.setUniform("u_ambient", ambient);
+        m_shader.setUniform("u_color", color);
+        m_shader.setUniform("u_dir", dir);
+        
+        // Model matrix uses for rotate normals
+        m_shader.setUniform("uModel", quakeToGL);
+        
+        glm::mat4 mvp = camera->weaponProjection * quakeToGL;
+        m_shader.setUniform("uMVP", mvp);
+        
+        m_shader.setUniform("uBoneTransforms", inst->animator.transforms);
+        
+        inst->m_pmodel->mesh.draw();
     }
     
-    dir = glm::mat3(camera->view) * dir;
-    
-    m_shader.setUniform("u_ambient", ambient);
-    m_shader.setUniform("u_color", color);
-    m_shader.setUniform("u_dir", dir);
-    
-    // Model matrix uses for rotate normals
-    m_shader.setUniform("uModel", quakeToGL);
-    
-    glm::mat4 mvp = camera->weaponProjection * quakeToGL;
-    m_shader.setUniform("uMVP", mvp);
-    
-    m_shader.setUniform("uBoneTransforms", m_player->animator.getBoneTransforms());
-    
-    m_player->m_pmodel->mesh.draw();
+    m_renderQueueView.clear();
 }
 
 GoldSrcModel* StudioRenderer::makeModel(const std::string& filename)
@@ -133,18 +137,13 @@ GoldSrcModel* StudioRenderer::makeModel(const std::string& filename)
     return &model;
 }
 
-GoldSrcModelInstance* StudioRenderer::makeModelInstance(const std::string& filename)
+std::unique_ptr<GoldSrcModelInstance> StudioRenderer::makeModelInstance(const std::string& filename)
 {
-    auto index = m_instances.size();
+    auto inst = std::make_unique<GoldSrcModelInstance>();
     
-    GoldSrcModelInstance& modelInstance = m_instances.emplace_back();
-    modelInstance.m_pmodel = makeModel(filename);
+    inst->m_pmodel = makeModel(filename);
+    inst->animator.m_pAnimation = &(inst->m_pmodel->animation);
     
-    auto count = modelInstance.m_pmodel->animation.sequences.size();
-    int seqIndex = (int) index % count;
-    
-    modelInstance.animator.setSeqIndex(seqIndex);
-    
-    return &modelInstance;
+    return inst;
 }
 

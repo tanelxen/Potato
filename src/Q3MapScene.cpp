@@ -19,10 +19,10 @@
 #include "StudioRenderer.h"
 #include "Q3LightGrid.h"
 
+#include "Monster.h"
+
 #define degrees(rad) ((rad) * (180.0f / M_PI))
 #define radians(deg) ((deg) * (M_PI / 180.0f))
-
-//static int oldMouseButtonState = GLFW_RELEASE;
 
 Q3MapScene::Q3MapScene(GLFWwindow* window, Camera *camera) : window(window), m_pCamera(camera)
 {
@@ -81,15 +81,22 @@ void Q3MapScene::loadMap(const std::string &filename)
         
         if (i == 0)
         {
+            m_pPlayer->m_pModelInstance = studio->makeModelInstance("assets/models/v_9mmhandgun.mdl");
             m_pPlayer->position = position + glm::vec3{0, 0, 0.25};
             m_pPlayer->yaw = yaw;
             m_pPlayer->pitch = 0;
+            
+            m_pPlayer->m_pModelInstance->animator.setSeqIndex(2);
         }
         else
         {
-            auto modelInstance = studio->makeModelInstance("assets/models/barney.mdl");
-            modelInstance->position = position + glm::vec3{0, 0, -24};
-            modelInstance->yaw = yaw;
+            auto& monster = m_monsters.emplace_back();
+            monster.m_pModelInstance = studio->makeModelInstance("assets/models/barney.mdl");
+            monster.position = position;
+            monster.yaw = yaw;
+            
+            int seqIndex = (int) (m_monsters.size() - 1) % monster.m_pModelInstance->animator.getNumSeq();
+            monster.m_pModelInstance->animator.setSeqIndex(seqIndex);
         }
     }
     
@@ -104,26 +111,18 @@ void Q3MapScene::update(float dt)
     if (m_pCamera == nullptr) return;
     
     m_pPlayer->update(dt);
+    studio->queueViewModel(m_pPlayer->m_pModelInstance.get());
     
     glm::vec3 camera_pos = m_pPlayer->position;
     camera_pos.z += 40;
     
     m_pCamera->setTransform(camera_pos, m_pPlayer->forward, m_pPlayer->right, m_pPlayer->up);
     
-    studio->update(dt);
-    
-//    int newMouseButtonState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-//    bool isClick = (newMouseButtonState == GLFW_RELEASE && oldMouseButtonState == GLFW_PRESS);
-//    oldMouseButtonState = newMouseButtonState;
-//    
-//    
-//    if (isClick)
-//    {
-//        Ray ray = m_pCamera->getMousePosInWorld();
-//        AABB aabb = { .mins = {0, 0, 0}, .maxs = {0, 0, 0} };
-//        
-//        m_collision.check(ray.origin, ray.origin + ray.dir * 1024.0f, aabb);
-//    }
+    for (auto& monster : m_monsters)
+    {
+        monster.update(dt);
+        studio->queue(monster.m_pModelInstance.get());
+    }
 }
 
 void Q3MapScene::draw()
@@ -138,11 +137,11 @@ void Q3MapScene::draw()
     glm::mat4x4 mvp = m_pCamera->projection * m_pCamera->view;
     m_mesh.renderFaces(mvp);
     
-    studio->draw(m_pCamera, m_pLightGrid.get());
+    studio->drawRegular(m_pCamera, m_pLightGrid.get());
     
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    studio->drawWeapon(m_pCamera, m_pLightGrid.get());
+    studio->drawViewModels(m_pCamera, m_pLightGrid.get());
 }
 
 
