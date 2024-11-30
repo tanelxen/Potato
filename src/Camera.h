@@ -5,33 +5,28 @@
 #pragma once
 #include <glm/glm.hpp>
 
-struct Ray
-{
-    glm::vec3 origin;
-    glm::vec3 dir;
-};
-
-struct Plane
-{
-    glm::vec3 normal;
-    float distance;
-};
-
-struct GLFWwindow;
+//struct Ray
+//{
+//    glm::vec3 origin;
+//    glm::vec3 dir;
+//};
+//
+//struct Plane
+//{
+//    glm::vec3 normal;
+//    float distance;
+//};
 
 class Camera
 {
 public:
-    Camera(GLFWwindow* window);
-    ~Camera();
-
     void updateViewport(float width, float height);
     
     void setTransform(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& right, const glm::vec3& up);
     
     glm::vec3 getPosition() const;
     
-    Ray getMousePosInWorld() const;
+//    Ray getMousePosInWorld() const;
     
     glm::vec3 getForward() const { return forward; }
 
@@ -46,6 +41,4 @@ private:
     glm::vec3 forward = {0, 0, 0};
     glm::vec3 right = {0, 0, 0};
     glm::vec3 up = {0, 0, 0};
-
-    GLFWwindow* window;
 };

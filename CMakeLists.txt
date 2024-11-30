@@ -65,6 +65,11 @@ add_executable( ${PROJECT_NAME}
         
         src/Monster.cpp
         src/Monster.h
+        
+        src/Application.cpp
+        src/Application.h
+        src/Input.cpp
+        src/Input.h
 )
 
 

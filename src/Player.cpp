@@ -11,37 +11,21 @@
 #include "PlayerMovement.h"
 #include "StudioRenderer.h"
 
-Player::Player(GLFWwindow *window, PlayerMovement *movement) : m_pWindow(window), m_pMovement(movement)
+#include "Input.h"
+
+static const float kMouseSense = 0.15;
+
+Player::Player(PlayerMovement *movement) : m_pMovement(movement)
 {
     
 }
 
 void Player::update(float dt)
 {
-    if (m_pWindow == nullptr) return;
     if (m_pMovement == nullptr) return;
-    
-    glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    
-    if (isFirstFrame)
-    {
-        glfwGetCursorPos(m_pWindow, &prevMouseX, &prevMouseY);
-        isFirstFrame = false;
-        return;
-    }
-    
-    double curMouseX = 0;
-    double curMouseY = 0;
-    glfwGetCursorPos(m_pWindow, &curMouseX, &curMouseY);
 
-    double dx = curMouseX - prevMouseX;
-    double dy = curMouseY - prevMouseY;
-
-    prevMouseX = curMouseX;
-    prevMouseY = curMouseY;
-
-    yaw -= dx * mouseSense * dt;
-    pitch += dy * mouseSense * dt;
+    yaw -= Input::getMouseOffsetX() * kMouseSense * dt;
+    pitch += Input::getMouseOffsetY() * kMouseSense * dt;
     
     if (pitch > 1.5) pitch = 1.5;
     else if (pitch < -1.5) pitch = -1.5;
@@ -64,27 +48,27 @@ void Player::update(float dt)
     float forwardmove = 0;
     float rightmove = 0;
 
-    if (glfwGetKey(m_pWindow, GLFW_KEY_W) > GLFW_RELEASE)
+    if (Input::isKeyPressed(87))
     {
         forwardmove += 1;
     }
 
-    if (glfwGetKey(m_pWindow, GLFW_KEY_S) > GLFW_RELEASE)
+    if (Input::isKeyPressed(83))
     {
         forwardmove -= 1;
     }
 
-    if (glfwGetKey(m_pWindow, GLFW_KEY_D) > GLFW_RELEASE)
+    if (Input::isKeyPressed(68))
     {
         rightmove += 1;
     }
 
-    if (glfwGetKey(m_pWindow, GLFW_KEY_A) > GLFW_RELEASE)
+    if (Input::isKeyPressed(65))
     {
         rightmove -= 1;
     }
     
-    bool jump = glfwGetKey(m_pWindow, GLFW_KEY_SPACE) == GLFW_PRESS;
+    bool jump = Input::isKeyPressed(32);
     
     m_pMovement->setTransform(position, forward, right, up);
     m_pMovement->setInputMovement(forwardmove, rightmove, jump);

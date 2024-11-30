@@ -10,14 +10,13 @@
 #include <memory>
 #include <glm/glm.hpp>
 
-struct GLFWwindow;
 class PlayerMovement;
 struct GoldSrcModelInstance;
 
 class Player
 {
 public:
-    Player(GLFWwindow* window, PlayerMovement* movement);
+    Player(PlayerMovement* movement);
     
     void update(float dt);
     
@@ -33,14 +32,6 @@ public:
     std::unique_ptr<GoldSrcModelInstance> m_pModelInstance;
     
 private:
-    GLFWwindow* m_pWindow;
     PlayerMovement* m_pMovement;
-    
-    float mouseSense = 0.15;
-
-    double prevMouseX = 0;
-    double prevMouseY = 0;
-    bool isFirstFrame = true;
-    
     glm::vec3 velocity = {0, 0, 0};
 };

@@ -14,7 +14,6 @@
 #include "Q3BspMesh.h"
 #include "Q3BspCollision.h"
 
-struct GLFWwindow;
 class Camera;
 
 class Player;
@@ -28,7 +27,7 @@ class Monster;
 class Q3MapScene
 {
 public:
-    Q3MapScene(GLFWwindow* window, Camera* camera);
+    Q3MapScene(Camera* camera);
     ~Q3MapScene();
     
     void loadMap(const std::string &filename);
@@ -45,8 +44,6 @@ private:
     
     Q3BspMesh m_mesh;
     Q3BspCollision m_collision;
-    
-    GLFWwindow* window;
     
     std::unique_ptr<StudioRenderer> studio;
     std::unique_ptr<Q3LightGrid> m_pLightGrid;

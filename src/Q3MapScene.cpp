@@ -14,7 +14,6 @@
 #include "PlayerMovement.h"
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include "StudioRenderer.h"
 #include "Q3LightGrid.h"
@@ -24,10 +23,12 @@
 #define degrees(rad) ((rad) * (180.0f / M_PI))
 #define radians(deg) ((deg) * (M_PI / 180.0f))
 
-Q3MapScene::Q3MapScene(GLFWwindow* window, Camera *camera) : window(window), m_pCamera(camera)
+Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
 {
     studio = std::make_unique<StudioRenderer>();
     m_pLightGrid = std::make_unique<Q3LightGrid>();
+    
+    loadMap("assets/q3/maps/q3dm7.bsp");
 }
 
 Q3MapScene::~Q3MapScene() = default;
@@ -44,7 +45,7 @@ void Q3MapScene::loadMap(const std::string &filename)
     
     m_pMovement = std::make_unique<PlayerMovement>(&m_collision);
     
-    m_pPlayer = std::make_unique<Player>(window, m_pMovement.get());
+    m_pPlayer = std::make_unique<Player>(m_pMovement.get());
     
     KeyValueCollection entities;
     entities.initFromString(bsp.m_entities);
@@ -107,7 +108,6 @@ void Q3MapScene::loadMap(const std::string &filename)
 
 void Q3MapScene::update(float dt)
 {
-    if (window == nullptr) return;
     if (m_pCamera == nullptr) return;
     
     m_pPlayer->update(dt);
