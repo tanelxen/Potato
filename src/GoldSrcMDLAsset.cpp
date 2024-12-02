@@ -350,6 +350,10 @@ void Model::readSequence()
         Sequence seq;
         seq.name = sequence.label;
         seq.fps = sequence.fps;
+        
+        seq.bbmin = { sequence.bbmin[0], sequence.bbmin[1], sequence.bbmin[2] };
+        seq.bbmax = { sequence.bbmax[0], sequence.bbmax[1], sequence.bbmax[2] };
+        
         seq.groundSpeed = 0;
         
         for (int frame_idx = 0; frame_idx < numframes; ++frame_idx)

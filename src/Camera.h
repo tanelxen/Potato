@@ -20,15 +20,14 @@
 class Camera
 {
 public:
-    void updateViewport(float width, float height);
-    
     void setTransform(const glm::vec3& position, const glm::vec3& forward, const glm::vec3& right, const glm::vec3& up);
+    void setAspectRatio(float aspectRatio);
     
     glm::vec3 getPosition() const;
     
 //    Ray getMousePosInWorld() const;
     
-    glm::vec3 getForward() const { return forward; }
+    glm::vec3 getForward() const { return m_forward; }
 
     glm::mat4x4 projection;
     glm::mat4x4 view;
@@ -38,7 +37,10 @@ public:
 private:
     glm::vec3 m_position;
 
-    glm::vec3 forward = {0, 0, 0};
-    glm::vec3 right = {0, 0, 0};
-    glm::vec3 up = {0, 0, 0};
+    glm::vec3 m_forward = {0, 0, 0};
+    glm::vec3 m_right = {0, 0, 0};
+    glm::vec3 m_up = {0, 0, 0};
+    
+    float width;
+    float height;
 };

@@ -11,15 +11,13 @@
 //    glm::vec3 rotation;
 //};
 
-void Camera::updateViewport(float width, float height)
+void Camera::setAspectRatio(float aspectRatio)
 {
-    float ratio = width / height;
-    
     float worldFOV = glm::radians(55.0f);
-    projection = glm::perspective(worldFOV, ratio, 0.1f, 4096.0f);
+    projection = glm::perspective(worldFOV, aspectRatio, 0.1f, 4096.0f);
     
     float weaponFOV = glm::radians(54.0f);
-    weaponProjection = glm::perspective(weaponFOV, ratio, 0.1f, 256.0f);
+    weaponProjection = glm::perspective(weaponFOV, aspectRatio, 0.1f, 256.0f);
 }
 
 //Ray Camera::getMousePosInWorld() const
@@ -56,6 +54,11 @@ void Camera::updateViewport(float width, float height)
 
 void Camera::setTransform(const glm::vec3 &position, const glm::vec3 &forward, const glm::vec3 &right, const glm::vec3 &up)
 {
+    m_position = position;
+    m_forward = forward;
+    m_right = right;
+    m_up = up;
+    
     view = glm::lookAt(position, position + forward, up);
     m_position = position;
 }

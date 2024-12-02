@@ -50,6 +50,9 @@ struct Sequence
     std::vector<Frame> frames;
     float fps;
     float groundSpeed;
+    
+    glm::vec3 bbmin;
+    glm::vec3 bbmax;
 };
 
 struct Model

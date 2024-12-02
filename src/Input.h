@@ -7,6 +7,12 @@
 
 #pragma once
 
+#define KEY_SPACE 32
+#define KEY_W 87
+#define KEY_S 83
+#define KEY_A 65
+#define KEY_D 68
+
 struct Input
 {
     static bool isKeyPressed(int keyNum);

@@ -195,3 +195,14 @@ void GoldSrcAnimator::updatePose()
         }
     }
 }
+
+glm::vec3 GoldSrcAnimator::getMinBounds() const
+{
+    return m_pAnimation->sequences[cur_seq_index].bbmin;
+}
+
+glm::vec3 GoldSrcAnimator::getMaxBounds() const
+{
+    return m_pAnimation->sequences[cur_seq_index].bbmax;
+}
+

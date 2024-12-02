@@ -14,6 +14,7 @@
 #include "Camera.h"
 
 #include "Input.h"
+#include "HUD.h"
 
 #include "Application.h"
 
@@ -74,12 +75,18 @@ Application::Application()
 
 Application::~Application()
 {
+    delete m_pScene;
+    delete m_pCamera;
+    
     glfwDestroyWindow(m_pWindow);
     glfwTerminate();
 }
 
 void Application::run()
 {
+    HUD hud;
+    hud.init();
+    
     double lastTime = 0;
     const double desiredFrameTime = 1.0 / 60;
     
@@ -97,12 +104,15 @@ void Application::run()
         int width, height;
         glfwGetFramebufferSize(m_pWindow, &width, &height);
 
-        m_pCamera->updateViewport((float)width, (float)height);
+        m_pCamera->setAspectRatio((float)width / (float)height);
         m_pScene->update(elapsedTime);
         
         glViewport(0, 0, width, height);
         
         m_pScene->draw();
+        
+        hud.resize(width, height);
+        hud.draw();
 
         glfwSwapBuffers(m_pWindow);
         
@@ -116,7 +126,7 @@ void Application::updateInputState()
 {
     static bool isFirstFrame = true;
     
-    for (int i = 0; i < 256; ++i)
+    for (int i = 32; i < 256; ++i)
     {
         int state = glfwGetKey(m_pWindow, i);
         Input::getInstance().keys[i] = glfwGetKey(m_pWindow, i) > GLFW_RELEASE;

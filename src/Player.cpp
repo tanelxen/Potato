@@ -48,22 +48,22 @@ void Player::update(float dt)
     float forwardmove = 0;
     float rightmove = 0;
 
-    if (Input::isKeyPressed(87))
+    if (Input::isKeyPressed(KEY_W))
     {
         forwardmove += 1;
     }
 
-    if (Input::isKeyPressed(83))
+    if (Input::isKeyPressed(KEY_S))
     {
         forwardmove -= 1;
     }
 
-    if (Input::isKeyPressed(68))
+    if (Input::isKeyPressed(KEY_D))
     {
         rightmove += 1;
     }
 
-    if (Input::isKeyPressed(65))
+    if (Input::isKeyPressed(KEY_A))
     {
         rightmove -= 1;
     }

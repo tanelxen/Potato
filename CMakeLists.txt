@@ -70,6 +70,13 @@ add_executable( ${PROJECT_NAME}
         src/Application.h
         src/Input.cpp
         src/Input.h
+        
+        src/HUD.cpp
+        src/HUD.h
+        src/DebugRenderer.cpp
+        src/DebugRenderer.h
+        src/Cube.cpp
+        src/Cube.h
 )
 
 

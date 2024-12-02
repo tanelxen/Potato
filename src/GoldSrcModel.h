@@ -56,6 +56,9 @@ struct GoldSrcAnimator
     
     int getNumSeq() const;
     
+    glm::vec3 getMinBounds() const;
+    glm::vec3 getMaxBounds() const;
+    
     void update(float dt);
     
 private:
