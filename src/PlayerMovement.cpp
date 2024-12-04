@@ -255,7 +255,7 @@ void PlayerMovement::step_slide(bool gravity, float dt)
     HitResult result;
     m_pCollision->trace(result, start_o, down, player_mins, player_maxs);
 
-    glm::vec3 up = {0, 1, 0};
+    glm::vec3 up = {0, 0, 1};
     
     // never step up when you still have up velocity
     if (velocity.z > 0 && (result.fraction == 1.0 || glm::dot(result.normal, up) < 0.7))

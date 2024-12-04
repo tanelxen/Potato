@@ -24,6 +24,8 @@ struct trace_work
     glm::vec3 offsets[8];
     
     glm::vec3 normal;
+    
+    int texture;
 };
 
 #define SURF_CLIP_EPSILON 0.125f
@@ -137,6 +139,8 @@ void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm:
     
     result.startsolid = work.startsolid;
     result.allsolid = work.allsolid;
+    
+    result.textureId = work.texture;
 }
 
 void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs)
@@ -144,6 +148,7 @@ void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const
     work.frac = 1;
     work.startsolid = false;
     work.allsolid = false;
+    work.texture = -1;
     
     glm::vec3 offset = (mins + maxs) * 0.5f;
     
@@ -315,6 +320,7 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
     float end_frac = 1;
     
     PlaneExtended* closest_plane;
+    int texture;
     
     bool getout = false;
     bool startout = false;
@@ -356,6 +362,7 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
             if (frac > start_frac) {
                 start_frac = frac;
                 closest_plane = plane;
+                texture = m_brushSides[side_index].textureID;
             }
         }
         else
@@ -394,6 +401,7 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
     {
         work.frac = fmax(start_frac, 0);
         work.normal = closest_plane->normal;
+        work.texture = texture;
     }
 }
 

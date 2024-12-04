@@ -128,7 +128,7 @@ void Application::updateInputState()
     
     for (int i = 32; i < 256; ++i)
     {
-        int state = glfwGetKey(m_pWindow, i);
+        Input::getInstance().prev_keys[i] = Input::getInstance().keys[i];
         Input::getInstance().keys[i] = glfwGetKey(m_pWindow, i) > GLFW_RELEASE;
     }
     

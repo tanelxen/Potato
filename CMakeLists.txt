@@ -77,6 +77,11 @@ add_executable( ${PROJECT_NAME}
         src/DebugRenderer.h
         src/Cube.cpp
         src/Cube.h
+        
+        src/miniaudio.c
+        src/ma_reverb_node.cpp
+        src/verblib.cpp
+        src/verblib.h
 )
 
 

@@ -22,6 +22,8 @@ public:
     
     glm::vec3 getPosition() const { return m_position; };
     
+    bool isWalk() const { return isGrounded && glm::length(velocity) > 0.1; };
+    
 private:
     Q3BspCollision* m_pCollision;
     

@@ -28,7 +28,8 @@
 #define FACE_FX 4
 
 static Quake3BSP* g_bsp = nullptr;
-static Shader shader;
+static Shader lm_shader;
+static Shader vl_shader;
 
 static void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas);
 static GLuint generateLightmap(const TextureAtlas& atlas);
@@ -124,7 +125,7 @@ void Q3BspMesh::GenerateTexture()
 
     for (int i = 0; i < g_bsp->m_textures.size(); i++)
     {
-        std::string path = "assets/";
+        std::string path = "assets/q3/";
         path.append(g_bsp->m_textures[i].strName);
         
         unsigned char* image = nullptr;
@@ -169,33 +170,12 @@ void Q3BspMesh::GenerateTexture()
 #define VERT_POSITION_LOC 0
 #define VERT_DIFFUSE_TEX_COORD_LOC 1
 #define VERT_LIGHTMAP_TEX_COORD_LOC 2
+#define VERT_COLOR_LOC 3
 
 void Q3BspMesh::initBuffers()
 {
-    std::unordered_map<int, std::vector<int>> indicesByTexture;
-    
-    for (int i = 0; i < g_bsp->m_faces.size(); ++i)
-    {
-        const tBSPFace &face = g_bsp->m_faces[i];
-        
-        if (face.type == FACE_FX) continue;
-        
-        for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
-        {
-            unsigned int index = g_bsp->m_indices[j] + face.startVertIndex;
-            indicesByTexture[face.textureID].push_back(index);
-        }
-    }
-    
-    for (auto pair : indicesByTexture)
-    {
-        auto& surface = surfaces.emplace_back();
-        surface.texId = m_textures[pair.first];
-        surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
-        surface.numVerts = (uint32_t)pair.second.size();
-        
-        indices.insert(indices.end(), pair.second.begin(), pair.second.end());
-    }
+    makeLightmappedIndices();
+    makeVertexlitIndices();
     
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -209,30 +189,36 @@ void Q3BspMesh::initBuffers()
     glBufferData(GL_ARRAY_BUFFER, sizeof(tBSPVertex) * g_bsp->m_verts.size(), g_bsp->m_verts.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(VERT_POSITION_LOC);
-    glVertexAttribPointer(VERT_POSITION_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), 0);
+    glVertexAttribPointer(VERT_POSITION_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void*)offsetof(tBSPVertex, vPosition));
 
     glEnableVertexAttribArray(VERT_DIFFUSE_TEX_COORD_LOC);
-    glVertexAttribPointer(VERT_DIFFUSE_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)12);
+    glVertexAttribPointer(VERT_DIFFUSE_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void*)offsetof(tBSPVertex, vTextureCoord));
 
     glEnableVertexAttribArray(VERT_LIGHTMAP_TEX_COORD_LOC);
-    glVertexAttribPointer(VERT_LIGHTMAP_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void *)20);
+    glVertexAttribPointer(VERT_LIGHTMAP_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(tBSPVertex), (void*)offsetof(tBSPVertex, vLightmapCoord));
+    
+    glEnableVertexAttribArray(VERT_COLOR_LOC);
+    glVertexAttribPointer(VERT_COLOR_LOC, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(tBSPVertex), (void*)offsetof(tBSPVertex, color));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
-    shader.init("assets/shaders/q3bsp.glsl");
+    lm_shader.init("assets/shaders/q3bsp_lightmapped.glsl");
+    lm_shader.bind();
+    glUniform1i(glGetUniformLocation(lm_shader.program, "s_bspTexture"), 0);
+    glUniform1i(glGetUniformLocation(lm_shader.program, "s_bspLightmap"), 1);
+    lm_shader.unbind();
     
-    shader.bind();
-    glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
-    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
-    
-    shader.unbind();
+    vl_shader.init("assets/shaders/q3bsp_vtxlit.glsl");
+    vl_shader.bind();
+    glUniform1i(glGetUniformLocation(vl_shader.program, "s_bspTexture"), 0);
+    vl_shader.unbind();
 }
 
 void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
 {
-    shader.bind();
-    shader.setUniform("MVP", mvp);
+    lm_shader.bind();
+    lm_shader.setUniform("MVP", mvp);
     
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -243,7 +229,23 @@ void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, m_lightmap);
     
-    for (auto surface : surfaces)
+    for (auto surface : lm_surfaces)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, surface.texId);
+        
+        glDrawElements(GL_TRIANGLES, surface.numVerts, GL_UNSIGNED_INT, (void *)surface.bufferOffset);
+    }
+    
+    vl_shader.bind();
+    vl_shader.setUniform("MVP", mvp);
+    
+    glDisable(GL_CULL_FACE);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    for (auto surface : vl_surfaces)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, surface.texId);
@@ -251,3 +253,62 @@ void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
         glDrawElements(GL_TRIANGLES, surface.numVerts, GL_UNSIGNED_INT, (void *)surface.bufferOffset);
     }
 }
+
+void Q3BspMesh::makeLightmappedIndices()
+{
+    std::unordered_map<int, std::vector<int>> indicesByTexture;
+    
+    for (int i = 0; i < g_bsp->m_faces.size(); ++i)
+    {
+        const tBSPFace &face = g_bsp->m_faces[i];
+        
+        if (face.type == FACE_FX) continue;
+        if (face.lightmapID == -1) continue;
+        
+        for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
+        {
+            unsigned int index = g_bsp->m_indices[j] + face.startVertIndex;
+            indicesByTexture[face.textureID].push_back(index);
+        }
+    }
+    
+    for (auto pair : indicesByTexture)
+    {
+        auto& surface = lm_surfaces.emplace_back();
+        surface.texId = m_textures[pair.first];
+        surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
+        surface.numVerts = (uint32_t)pair.second.size();
+        
+        indices.insert(indices.end(), pair.second.begin(), pair.second.end());
+    }
+}
+
+void Q3BspMesh::makeVertexlitIndices()
+{
+    std::unordered_map<int, std::vector<int>> indicesByTexture;
+    
+    for (int i = 0; i < g_bsp->m_faces.size(); ++i)
+    {
+        const tBSPFace &face = g_bsp->m_faces[i];
+        
+        if (face.type == FACE_FX) continue;
+        if (face.lightmapID != -1) continue;
+        
+        for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
+        {
+            unsigned int index = g_bsp->m_indices[j] + face.startVertIndex;
+            indicesByTexture[face.textureID].push_back(index);
+        }
+    }
+    
+    for (auto pair : indicesByTexture)
+    {
+        auto& surface = vl_surfaces.emplace_back();
+        surface.texId = m_textures[pair.first];
+        surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
+        surface.numVerts = (uint32_t)pair.second.size();
+        
+        indices.insert(indices.end(), pair.second.begin(), pair.second.end());
+    }
+}
+

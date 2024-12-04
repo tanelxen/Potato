@@ -14,6 +14,12 @@ bool Input::isKeyPressed(int keyNum)
     return getInstance().keys[keyNum];
 }
 
+bool Input::isKeyClicked(int keyNum)
+{
+    if (keyNum >= 256) return false;
+    return !getInstance().keys[keyNum] && getInstance().prev_keys[keyNum];
+}
+
 bool Input::isLeftMouseButtonPressed()
 {
     return getInstance().m_currLeftMouseButtonState;

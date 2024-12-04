@@ -31,6 +31,9 @@ private:
     void initBuffers();
     void GenerateTexture();
     
+    void makeLightmappedIndices();
+    void makeVertexlitIndices();
+    
     unsigned int vao;
     unsigned int vbo;
     unsigned int ibo;
@@ -40,6 +43,8 @@ private:
 
     unsigned int missing_id;
     
-    std::vector<Surface> surfaces;
     std::vector<unsigned int> indices;
+    
+    std::vector<Surface> lm_surfaces;
+    std::vector<Surface> vl_surfaces;
 };

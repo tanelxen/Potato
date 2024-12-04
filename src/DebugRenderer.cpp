@@ -50,16 +50,21 @@ void DebugRenderer::addBBox(glm::vec3 mins, glm::vec3 maxs, glm::vec3 color)
 
 void DebugRenderer::update(float dt)
 {
+    int erasedCount = 0;
+    
     for (auto it = m_lines.begin(); it != m_lines.end();)
     {
         it->lifeSpan -= dt;
         
         if (it->lifeSpan <= 0.0f) {
             it = m_lines.erase(it);
+            erasedCount++;
         } else {
             ++it;
         }
     }
+    
+    isDirty |= erasedCount > 0;
 }
 
 void DebugRenderer::draw(const Camera& camera)

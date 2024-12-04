@@ -16,6 +16,7 @@
 struct Input
 {
     static bool isKeyPressed(int keyNum);
+    static bool isKeyClicked(int keyNum);
     
     static bool isLeftMouseButtonPressed();
     static bool isRightMouseButtonPressed();
@@ -40,6 +41,7 @@ private:
     friend struct Application;
     
     bool keys[256];
+    bool prev_keys[256];
     
     float m_mouseX = 0;
     float m_mouseY = 0;
