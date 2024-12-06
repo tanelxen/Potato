@@ -39,10 +39,14 @@ static ma_sound g_sound3;
 
 static int prev_step_id = -1;
 static bool is_right_step = true;
-static ma_sound g_sound_steps[4];
+static ma_sound g_default_sound_steps[4];
+static ma_sound g_wood_sound_steps[4];
+static ma_sound g_snow_sound_steps[4];
+static ma_sound g_clank_sound_steps[4];
 
 static ma_lpf_node g_lpfNode;
 static ma_reverb_node g_reverbNode;
+static ma_delay_node g_delayNode;
 
 static WiredCube cube;
 
@@ -55,7 +59,7 @@ Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
     studio = std::make_unique<StudioRenderer>();
     m_pLightGrid = std::make_unique<Q3LightGrid>();
     
-    loadMap("assets/q3/maps/q3dm7.bsp");
+    loadMap("assets/wolf/maps/escape2.bsp");
     
     ma_engine_init(NULL, &g_engine);
     
@@ -63,11 +67,25 @@ Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
     ma_sound_init_from_file(&g_engine, "assets/sounds/donthurtem.wav", 0, NULL, NULL, &g_sound2);
     ma_sound_init_from_file(&g_engine, "assets/sounds/leavealone.wav", 0, NULL, NULL, &g_sound3);
     
-    ma_sound_init_from_file(&g_engine, "assets/sounds/pl_step1.wav", 0, NULL, NULL, &g_sound_steps[0]);
-    ma_sound_init_from_file(&g_engine, "assets/sounds/pl_step2.wav", 0, NULL, NULL, &g_sound_steps[1]);
-    ma_sound_init_from_file(&g_engine, "assets/sounds/pl_step3.wav", 0, NULL, NULL, &g_sound_steps[2]);
-    ma_sound_init_from_file(&g_engine, "assets/sounds/pl_step4.wav", 0, NULL, NULL, &g_sound_steps[3]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/step1.wav", 0, NULL, NULL, &g_default_sound_steps[0]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/step2.wav", 0, NULL, NULL, &g_default_sound_steps[1]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/step3.wav", 0, NULL, NULL, &g_default_sound_steps[2]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/step4.wav", 0, NULL, NULL, &g_default_sound_steps[3]);
     
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/wood1.wav", 0, NULL, NULL, &g_wood_sound_steps[0]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/wood2.wav", 0, NULL, NULL, &g_wood_sound_steps[1]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/wood3.wav", 0, NULL, NULL, &g_wood_sound_steps[2]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/wood4.wav", 0, NULL, NULL, &g_wood_sound_steps[3]);
+    
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/snow1.wav", 0, NULL, NULL, &g_snow_sound_steps[0]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/snow2.wav", 0, NULL, NULL, &g_snow_sound_steps[1]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/snow3.wav", 0, NULL, NULL, &g_snow_sound_steps[2]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/snow4.wav", 0, NULL, NULL, &g_snow_sound_steps[3]);
+    
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/clank1.wav", 0, NULL, NULL, &g_clank_sound_steps[0]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/clank2.wav", 0, NULL, NULL, &g_clank_sound_steps[1]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/clank3.wav", 0, NULL, NULL, &g_clank_sound_steps[2]);
+    ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/clank4.wav", 0, NULL, NULL, &g_clank_sound_steps[3]);
     
     
     ma_sound_set_spatialization_enabled(&g_sound2, true);
@@ -81,10 +99,10 @@ Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
     ma_sound_set_spatialization_enabled(&g_sound1, false);
     ma_sound_set_spatialization_enabled(&g_sound3, false);
     
-    ma_sound_set_spatialization_enabled(&g_sound_steps[0], false);
-    ma_sound_set_spatialization_enabled(&g_sound_steps[1], false);
-    ma_sound_set_spatialization_enabled(&g_sound_steps[2], false);
-    ma_sound_set_spatialization_enabled(&g_sound_steps[3], false);
+    ma_sound_set_spatialization_enabled(&g_default_sound_steps[0], false);
+    ma_sound_set_spatialization_enabled(&g_default_sound_steps[1], false);
+    ma_sound_set_spatialization_enabled(&g_default_sound_steps[2], false);
+    ma_sound_set_spatialization_enabled(&g_default_sound_steps[3], false);
     
     {
         ma_uint32 channels   = ma_engine_get_channels(&g_engine);
@@ -93,17 +111,33 @@ Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
         ma_reverb_node_config config = ma_reverb_node_config_init(channels, sampleRate);
         
         ma_reverb_node_init(ma_engine_get_node_graph(&g_engine), &config, NULL, &g_reverbNode);
-        ma_node_attach_output_bus(&g_reverbNode, 0, ma_engine_get_endpoint(&g_engine), 0);
+//        ma_node_attach_output_bus(&g_reverbNode, 0, ma_engine_get_endpoint(&g_engine), 0);
         
-        g_reverbNode.reverb.dry = 0.75;
-        g_reverbNode.reverb.wet = 0.25;
+        g_reverbNode.reverb.dry = 0.6;
+        g_reverbNode.reverb.wet = 0.4;
         
         ma_node_attach_output_bus(&g_sound1, 0, &g_reverbNode, 0);
         
-        ma_node_attach_output_bus(&g_sound_steps[0], 0, &g_reverbNode, 0);
-        ma_node_attach_output_bus(&g_sound_steps[1], 0, &g_reverbNode, 0);
-        ma_node_attach_output_bus(&g_sound_steps[2], 0, &g_reverbNode, 0);
-        ma_node_attach_output_bus(&g_sound_steps[3], 0, &g_reverbNode, 0);
+        ma_node_attach_output_bus(&g_default_sound_steps[0], 0, &g_reverbNode, 0);
+        ma_node_attach_output_bus(&g_default_sound_steps[1], 0, &g_reverbNode, 0);
+        ma_node_attach_output_bus(&g_default_sound_steps[2], 0, &g_reverbNode, 0);
+        ma_node_attach_output_bus(&g_default_sound_steps[3], 0, &g_reverbNode, 0);
+    }
+    
+    {
+        ma_uint32 channels   = ma_engine_get_channels(&g_engine);
+        ma_uint32 sampleRate = ma_engine_get_sample_rate(&g_engine);
+        
+        float delayInFrames = 0.25f * sampleRate * channels;
+        float decay = 0.1f;
+        ma_delay_node_config config = ma_delay_node_config_init(channels, sampleRate, delayInFrames, decay);
+        
+        ma_delay_node_init(ma_engine_get_node_graph(&g_engine), &config, NULL, &g_delayNode);
+        ma_node_attach_output_bus(&g_delayNode, 0, ma_engine_get_endpoint(&g_engine), 0);
+        
+        ma_node_attach_output_bus(&g_reverbNode, 0, &g_delayNode, 0);
+        
+//        ma_node_attach_output_bus(&g_sound1, 0, &g_delayNode, 0);
     }
     
     {
@@ -196,6 +230,18 @@ void Q3MapScene::loadMap(const std::string &filename)
     m_pLightGrid->init(bsp);
     
     textures = bsp.m_textures;
+    
+    
+//    int wood = 0x40000;
+//    int snow = 0x400000;
+//    
+//    printf("SURF_WOOD = ");
+//    printBits(sizeof(int), &wood);
+//    printf("\n");
+//    
+//    printf("SURF_SNOW = ");
+//    printBits(sizeof(int), &snow);
+//    printf("\n");
 }
 
 bool intersection(const glm::vec3& start, const glm::vec3& end, const glm::vec3& mins, const glm::vec3& maxs, glm::vec3& point);
@@ -271,9 +317,9 @@ void Q3MapScene::update(float dt)
         HitResult result;
         m_collision.trace(result, start, end, glm::vec3(0), glm::vec3(0));
         
-        if (result.textureId != -1) {
-            printf("texture = %s\n", textures[result.textureId].strName);
-        }
+//        if (result.textureId != -1) {
+//            printf("texture = %s\n", textures[result.textureId].strName);
+//        }
         
         float dist1 = glm::length(result.endpos - start);
         
@@ -321,9 +367,9 @@ void Q3MapScene::update(float dt)
             glm::vec3 end_right = m_pPlayer->position + glm::vec3(0, -1024, 0);
             m_collision.trace(result_right, start, end_right, glm::vec3(0), glm::vec3(0));
             
-            float room_depth = (result_forward.fraction + result_back.fraction) * 1024.0;
-            float room_width = (result_left.fraction + result_right.fraction) * 1024.0;
-            float room_height = result_up.fraction * 1024.0;
+//            float room_depth = (result_forward.fraction + result_back.fraction) * 1024.0;
+//            float room_width = (result_left.fraction + result_right.fraction) * 1024.0;
+//            float room_height = result_up.fraction * 1024.0;
             
 //            float min_distance = fmin(result_forward.fraction, result_back.fraction);
 //            min_distance = fmin(min_distance, result_left.fraction);
@@ -333,15 +379,18 @@ void Q3MapScene::update(float dt)
 //            printf("DEPTH: %.0fm, WIDTH: %.0fm, HEIGHT: %.0fm\n", room_depth, room_width, room_height);
             
             // Вычисление максимального расстояния
-            float max_distance = sqrtf(room_width * room_width +
-                                       room_height * room_height +
-                                       room_depth * room_depth);
+//            float max_distance = sqrtf(room_width * room_width +
+//                                       room_height * room_height +
+//                                       room_depth * room_depth);
             
 //            max_distance = fmax(fmax(room_width, room_height), room_depth);
             
-            float decay = max_distance / 2048;
+//            float decay = 0.8f * max_distance / 2048;
+            float decay = (result_forward.fraction + result_back.fraction + result_left.fraction + result_right.fraction + result_up.fraction) / 5;
             verblib_set_room_size(&g_reverbNode.reverb, decay);
             verblib_set_damping(&g_reverbNode.reverb, 0.6);
+            
+            ma_delay_set_decay(&g_delayNode.delay, decay * decay);
             
             int step_id = rand() % 4;
             
@@ -352,12 +401,42 @@ void Q3MapScene::update(float dt)
             
             prev_step_id = step_id;
             
-            ma_sound& sound = g_sound_steps[step_id];
+            #define SURF_WOOD 0x40000
+            #define SURF_SNOW 0x400000
+            #define SURF_METAL 0x1000
             
-            ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
+            int surfaceFlags = m_pMovement->getSurfaceFlags();
+            
+            if (surfaceFlags & SURF_WOOD)
+            {
+                ma_sound& sound = g_wood_sound_steps[step_id];
+                
+                ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
+                ma_sound_start(&sound);
+            }
+            else if (surfaceFlags & SURF_SNOW)
+            {
+                ma_sound& sound = g_snow_sound_steps[step_id];
+                
+                ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
+                ma_sound_start(&sound);
+            }
+            else if (surfaceFlags & SURF_METAL)
+            {
+                ma_sound& sound = g_clank_sound_steps[step_id];
+                
+                ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
+                ma_sound_start(&sound);
+            }
+            else
+            {
+                ma_sound& sound = g_default_sound_steps[step_id];
+                
+                ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
+                ma_sound_start(&sound);
+            }
+            
             is_right_step = !is_right_step;
-            
-            ma_sound_start(&sound);
         }
         
         step_timer += dt;

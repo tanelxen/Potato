@@ -25,6 +25,7 @@ struct trace_work
     
     glm::vec3 normal;
     
+    int surfaceFlags;
     int texture;
 };
 
@@ -97,7 +98,7 @@ struct Q3BspCollision::Impl
     std::vector<int> m_leafBrushes;
     
     std::vector<PlaneExtended> m_planes;
-    std::vector<int> m_textures;
+    std::vector<tBSPTexture> m_textures;
 };
 
 Q3BspCollision::Q3BspCollision() : pImpl(new Impl) {}
@@ -120,12 +121,7 @@ void Q3BspCollision::initFromBsp(Quake3BSP *bsp)
         pImpl->m_planes[i].init(bsp->m_planes[i]);
     }
     
-    pImpl->m_textures.resize(bsp->m_textures.size());
-    
-    for (int i = 0; i < bsp->m_textures.size(); ++i)
-    {
-        pImpl->m_textures[i] = bsp->m_textures[i].contents;
-    }
+    pImpl->m_textures = bsp->m_textures;
 }
 
 void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs) const
@@ -141,6 +137,7 @@ void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm:
     result.allsolid = work.allsolid;
     
     result.textureId = work.texture;
+    result.surfaceFlags = work.surfaceFlags;
 }
 
 void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs)
@@ -149,6 +146,7 @@ void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const
     work.startsolid = false;
     work.allsolid = false;
     work.texture = -1;
+    work.surfaceFlags = 0;
     
     glm::vec3 offset = (mins + maxs) * 0.5f;
     
@@ -297,7 +295,7 @@ void Q3BspCollision::Impl::trace_leaf(trace_work& work, int index)
     {
         int brush_index = m_leafBrushes[leaf.leafBrush + i];
         const tBSPBrush &brush = m_brushes[brush_index];
-        int contents = m_textures[brush.textureID];
+        int contents = m_textures[brush.textureID].contents;
 
         if ((contents & CONTENTS_SOLID))
         {
@@ -321,6 +319,7 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
     
     PlaneExtended* closest_plane;
     int texture;
+    int surfaceFlags;
     
     bool getout = false;
     bool startout = false;
@@ -363,6 +362,7 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
                 start_frac = frac;
                 closest_plane = plane;
                 texture = m_brushSides[side_index].textureID;
+                surfaceFlags = m_textures[texture].flags;
             }
         }
         else
@@ -401,6 +401,7 @@ void Q3BspCollision::Impl::trace_brush(trace_work& work, const tBSPBrush &brush)
     {
         work.frac = fmax(start_frac, 0);
         work.normal = closest_plane->normal;
+        work.surfaceFlags = surfaceFlags;
         work.texture = texture;
     }
 }

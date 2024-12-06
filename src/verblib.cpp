@@ -337,36 +337,19 @@ void verblib_process ( verblib* verb, const float* input_buffer, float* output_b
                 outL = outR = 0.0f;
                 input = ( input_buffer[0] + input_buffer[1] ) * verb->gain;
                 
-                float earlyL = 0.0f, earlyR = 0.0f; // Для ранних отражений
-                float lateL = 0.0f, lateR = 0.0f;   // Для поздних отражений
-                
-                /* Accumulate comb filters in parallel (ранние отражения). */
+                /* Accumulate comb filters in parallel. */
                 for ( i = 0; i < verblib_numcombs; i++ )
                 {
-                    earlyL += verblib_comb_process ( &verb->combL[i], input );
-                    earlyR += verblib_comb_process ( &verb->combR[i], input );
+                    outL += verblib_comb_process ( &verb->combL[i], input );
+                    outR += verblib_comb_process ( &verb->combR[i], input );
                 }
                 
-                /* Feed through allpasses in series (поздние отражения). */
-                lateL = earlyL; // Используем выход comb-фильтров как вход для all-pass
-                lateR = earlyR;
+                /* Feed through allpasses in series. */
                 for ( i = 0; i < verblib_numallpasses; i++ )
                 {
-                    lateL = verblib_allpass_process ( &verb->allpassL[i], lateL );
-                    lateR = verblib_allpass_process ( &verb->allpassR[i], lateR );
+                    outL = verblib_allpass_process ( &verb->allpassL[i], outL );
+                    outR = verblib_allpass_process ( &verb->allpassR[i], outR );
                 }
-                
-                float early_gain = 0.9f;
-                float late_gain = 0.8f;
-                
-                /* Применяем коэффициенты ранних и поздних отражений. */
-                earlyL *= early_gain;
-                earlyR *= early_gain;
-                lateL *= late_gain;
-                lateR *= late_gain;
-                
-                outL = earlyL + lateL;
-                outR = earlyR + lateR;
                 
                 /* Calculate output REPLACING anything already there. */
                 output_buffer[0] = outL * verb->wet1 + outR * verb->wet2 + input_buffer[0] * verb->dry;

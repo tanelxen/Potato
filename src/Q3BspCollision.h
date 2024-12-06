@@ -22,6 +22,7 @@ struct HitResult
     bool allsolid;
     
     int textureId;
+    int surfaceFlags;
 };
 
 class Q3BspCollision

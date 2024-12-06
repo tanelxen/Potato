@@ -24,6 +24,8 @@ public:
     
     bool isWalk() const { return isGrounded && glm::length(velocity) > 0.1; };
     
+    int getSurfaceFlags() const { return surfaceFlags; }
+    
 private:
     Q3BspCollision* m_pCollision;
     
@@ -49,6 +51,7 @@ private:
     glm::vec3 velocity;
     
     glm::vec3 ground_normal;
+    int surfaceFlags;
     bool isGrounded;
     
     int m_movementBits;

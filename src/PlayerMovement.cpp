@@ -109,12 +109,14 @@ void PlayerMovement::trace_ground()
     {
         m_movementBits |= MOVEMENT_JUMPING;
         ground_normal = {0, 0, 0};
+        surfaceFlags = 0;
         isGrounded = false;
     }
     else
     {
         m_movementBits &= ~MOVEMENT_JUMPING;
         ground_normal = result.normal;
+        surfaceFlags = result.surfaceFlags;
         isGrounded = true;
     }
 }

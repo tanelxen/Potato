@@ -125,7 +125,7 @@ void Q3BspMesh::GenerateTexture()
 
     for (int i = 0; i < g_bsp->m_textures.size(); i++)
     {
-        std::string path = "assets/q3/";
+        std::string path = "assets/wolf/";
         path.append(g_bsp->m_textures[i].strName);
         
         unsigned char* image = nullptr;
