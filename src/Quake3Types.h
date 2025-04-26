@@ -87,6 +87,31 @@ struct tBSPPlane
     float distance;             // The plane distance from origin
 };
 
+// This stores the cluster data for the PVS's
+struct tBSPVisData
+{
+    int numOfClusters;            // The number of clusters
+    int bytesPerCluster;        // The amount of bytes (8 bits) in the cluster's bitset
+    byte *pBitsets;                // The array of bytes that holds the cluster bitsets
+    
+    inline bool isClusterVisible(int current, int test)
+    {
+        // Make sure we have valid memory and that the current cluster is > 0.
+        // If we don't have any memory or a negative cluster, return a visibility (1).
+        if(!pBitsets || current < 0) return true;
+        
+        // Use binary math to get the 8 bit visibility set for the current cluster
+        byte visSet = pBitsets[(current*bytesPerCluster) + (test / 8)];
+        
+        // Now that we have our vector (bitset), do some bit shifting to find if
+        // the "test" cluster is visible from the "current" cluster, according to the bitset.
+        int result = visSet & (1 << ((test) & 7));
+        
+        // Return the result ( either 1 (visible) or 0 (not visible) )
+        return (result);
+    }
+};
+
 // This stores the brush data
 struct tBSPBrush
 {

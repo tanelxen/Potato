@@ -124,6 +124,16 @@ bool Quake3BSP::initFromFile(const std::string& filename)
     fseek(fp, lumps[kLightVolumes].offset, SEEK_SET);
     fread(m_lightVolumes.data(), numLightVolumes, sizeof(tBSPLightVolume), fp);
     
+    // VIS
+    fseek(fp, lumps[kVisData].offset, SEEK_SET);
+    fread(&(m_clusters.numOfClusters), 1, sizeof(int), fp);
+    fread(&(m_clusters.bytesPerCluster), 1, sizeof(int), fp);
+    
+    int size = m_clusters.numOfClusters * m_clusters.bytesPerCluster;
+    m_clusters.pBitsets = new byte [size];
+    
+    fread(m_clusters.pBitsets, 1, sizeof(byte) * size, fp);
+    
     tesselateBezierPatches(m_faces, m_verts, m_indices, 9);
 
     fclose(fp);

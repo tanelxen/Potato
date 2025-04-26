@@ -27,7 +27,7 @@ void StudioRenderer::queueViewModel(GoldSrcModelInstance* inst)
     m_renderQueueView.push_back(inst);
 }
 
-void StudioRenderer::drawRegular(Camera* camera, Q3LightGrid* lightGrid)
+void StudioRenderer::drawRegular(const Camera* camera, const Q3LightGrid* lightGrid)
 {
     m_shader.bind();
     
@@ -69,7 +69,7 @@ void StudioRenderer::drawRegular(Camera* camera, Q3LightGrid* lightGrid)
     m_renderQueue.clear();
 }
 
-void StudioRenderer::drawViewModels(Camera* camera, Q3LightGrid* lightGrid)
+void StudioRenderer::drawViewModels(const Camera* camera, const Q3LightGrid* lightGrid)
 {
     m_shader.bind();
     

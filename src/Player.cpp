@@ -68,7 +68,7 @@ void Player::update(float dt)
         rightmove -= 1;
     }
     
-    bool jump = Input::isKeyPressed(32);
+    bool jump = Input::isKeyPressed(KEY_SPACE);
     
     m_pMovement->setTransform(position, forward, right, up);
     m_pMovement->setInputMovement(forwardmove, rightmove, jump);
@@ -77,31 +77,5 @@ void Player::update(float dt)
     position = m_pMovement->getPosition();
     
     m_pModelInstance->animator.update(dt);
-    
-//    float moveSpeed = 96;
-//    
-//    velocity = {0, 0, 0};
-//
-//    if (glfwGetKey(m_pWindow, GLFW_KEY_W) > GLFW_RELEASE)
-//    {
-//        velocity += forward * (moveSpeed * dt);
-//    }
-//
-//    if (glfwGetKey(m_pWindow, GLFW_KEY_S) > GLFW_RELEASE)
-//    {
-//        velocity -= forward * (moveSpeed * dt);
-//    }
-//
-//    if (glfwGetKey(m_pWindow, GLFW_KEY_D) > GLFW_RELEASE)
-//    {
-//        velocity += right * (moveSpeed * dt);
-//    }
-//
-//    if (glfwGetKey(m_pWindow, GLFW_KEY_A) > GLFW_RELEASE)
-//    {
-//        velocity -= right * (moveSpeed * dt);
-//    }
-//
-//    position += velocity;
 }
 

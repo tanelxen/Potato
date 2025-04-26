@@ -2,7 +2,11 @@
 
 #include "ma_reverb_node.h"
 
-#include <stdlib.h>
+#ifdef __APPLE__
+#include <stdlib.h>  /* OSX gets its malloc stuff through here */
+#else
+#include <malloc.h>
+#endif
 
 ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate)
 {

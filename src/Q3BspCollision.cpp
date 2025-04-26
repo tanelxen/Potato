@@ -140,6 +140,44 @@ void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm:
     result.surfaceFlags = work.surfaceFlags;
 }
 
+int Q3BspCollision::findCluster(const glm::vec3 &pos)
+{
+    int i = 0;
+    float distance = 0.0f;
+    
+    // Continue looping until we find a negative index
+    while(i >= 0)
+    {
+        // Get the current node, then find the slitter plane from that
+        // node's plane index.  Notice that we use a constant reference
+        // to store the plane and node so we get some optimization.
+        const tBSPNode& node = pImpl->m_nodes[i];
+        const PlaneExtended& plane = pImpl->m_planes[node.plane];
+        
+        // Use the Plane Equation (Ax + by + Cz + D = 0) to find if the
+        // camera is in front of or behind the current splitter plane.
+        distance = plane.normal.x * pos.x + plane.normal.y * pos.y + plane.normal.z * pos.z - plane.distance;
+        
+        // If the camera is in front of the plane
+        if(distance >= 0)
+        {
+            // Assign the current node to the node in front of itself
+            i = node.child[0];
+        }
+        else
+        {
+            // Assign the current node to the node behind itself
+            i = node.child[1];
+        }
+    }
+    
+    // Return the leaf index (same thing as saying:  return -(i + 1)).
+    int leafIndex = ~i;  // Binary operation
+    
+    return pImpl->m_leafs[leafIndex].cluster;
+}
+
+
 void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs)
 {
     work.frac = 1;

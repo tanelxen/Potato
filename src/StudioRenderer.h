@@ -24,8 +24,8 @@ struct StudioRenderer
     void queue(GoldSrcModelInstance* inst);
     void queueViewModel(GoldSrcModelInstance* inst);
     
-    void drawRegular(Camera* camera, Q3LightGrid* lightGrid);
-    void drawViewModels(Camera* camera, Q3LightGrid* lightGrid);
+    void drawRegular(const Camera* camera, const Q3LightGrid* lightGrid);
+    void drawViewModels(const Camera* camera, const Q3LightGrid* lightGrid);
     
 private:
     Shader m_shader;

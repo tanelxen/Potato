@@ -29,4 +29,6 @@ struct Quake3BSP
     std::vector<tBSPModel> m_models;
     
     std::vector<tBSPLightVolume> m_lightVolumes;
+    
+    tBSPVisData m_clusters;
 };

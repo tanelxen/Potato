@@ -34,8 +34,6 @@
 
 static ma_engine g_engine;
 static ma_sound g_sound1;
-static ma_sound g_sound2;
-static ma_sound g_sound3;
 
 static int prev_step_id = -1;
 static bool is_right_step = true;
@@ -54,18 +52,31 @@ static float step_timer = 0.0f;
 
 std::vector<tBSPTexture> textures;
 
+tBSPVisData m_clusters;
+
+struct SoundEntity
+{
+    ma_sound sound;
+    
+    std::string filename;
+    glm::vec3 origin;
+    
+    int cluster;
+    bool isVisible = false;
+};
+
+static std::vector<SoundEntity> g_ambients;
+
 Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
 {
     studio = std::make_unique<StudioRenderer>();
     m_pLightGrid = std::make_unique<Q3LightGrid>();
     
-    loadMap("assets/wolf/maps/escape2.bsp");
-    
     ma_engine_init(NULL, &g_engine);
     
+    loadMap("assets/wolf/maps/escape2.bsp");
+    
     ma_sound_init_from_file(&g_engine, "assets/sounds/pl_gun3.wav", 0, NULL, NULL, &g_sound1);
-    ma_sound_init_from_file(&g_engine, "assets/sounds/donthurtem.wav", 0, NULL, NULL, &g_sound2);
-    ma_sound_init_from_file(&g_engine, "assets/sounds/leavealone.wav", 0, NULL, NULL, &g_sound3);
     
     ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/step1.wav", 0, NULL, NULL, &g_default_sound_steps[0]);
     ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/step2.wav", 0, NULL, NULL, &g_default_sound_steps[1]);
@@ -87,72 +98,33 @@ Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
     ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/clank3.wav", 0, NULL, NULL, &g_clank_sound_steps[2]);
     ma_sound_init_from_file(&g_engine, "assets/wolf/sounds/player/footsteps/clank4.wav", 0, NULL, NULL, &g_clank_sound_steps[3]);
     
-    
-    ma_sound_set_spatialization_enabled(&g_sound2, true);
-    ma_sound_set_positioning(&g_sound2, ma_positioning_absolute);
-    ma_sound_set_attenuation_model(&g_sound2, ma_attenuation_model_inverse);
-    
-    ma_sound_set_rolloff(&g_sound2, 0.95f);
-    ma_sound_set_min_distance(&g_sound2, 256.0f);
-    ma_sound_set_max_distance(&g_sound2, 2048.0f);
-    
-    ma_sound_set_spatialization_enabled(&g_sound1, false);
-    ma_sound_set_spatialization_enabled(&g_sound3, false);
-    
-    ma_sound_set_spatialization_enabled(&g_default_sound_steps[0], false);
-    ma_sound_set_spatialization_enabled(&g_default_sound_steps[1], false);
-    ma_sound_set_spatialization_enabled(&g_default_sound_steps[2], false);
-    ma_sound_set_spatialization_enabled(&g_default_sound_steps[3], false);
-    
+    for (int i = 0; i < 4; ++i)
     {
-        ma_uint32 channels   = ma_engine_get_channels(&g_engine);
-        ma_uint32 sampleRate = ma_engine_get_sample_rate(&g_engine);
-        
-        ma_reverb_node_config config = ma_reverb_node_config_init(channels, sampleRate);
-        
-        ma_reverb_node_init(ma_engine_get_node_graph(&g_engine), &config, NULL, &g_reverbNode);
-//        ma_node_attach_output_bus(&g_reverbNode, 0, ma_engine_get_endpoint(&g_engine), 0);
-        
-        g_reverbNode.reverb.dry = 0.6;
-        g_reverbNode.reverb.wet = 0.4;
-        
-        ma_node_attach_output_bus(&g_sound1, 0, &g_reverbNode, 0);
-        
-        ma_node_attach_output_bus(&g_default_sound_steps[0], 0, &g_reverbNode, 0);
-        ma_node_attach_output_bus(&g_default_sound_steps[1], 0, &g_reverbNode, 0);
-        ma_node_attach_output_bus(&g_default_sound_steps[2], 0, &g_reverbNode, 0);
-        ma_node_attach_output_bus(&g_default_sound_steps[3], 0, &g_reverbNode, 0);
-    }
-    
-    {
-        ma_uint32 channels   = ma_engine_get_channels(&g_engine);
-        ma_uint32 sampleRate = ma_engine_get_sample_rate(&g_engine);
-        
-        float delayInFrames = 0.25f * sampleRate * channels;
-        float decay = 0.1f;
-        ma_delay_node_config config = ma_delay_node_config_init(channels, sampleRate, delayInFrames, decay);
-        
-        ma_delay_node_init(ma_engine_get_node_graph(&g_engine), &config, NULL, &g_delayNode);
-        ma_node_attach_output_bus(&g_delayNode, 0, ma_engine_get_endpoint(&g_engine), 0);
-        
-        ma_node_attach_output_bus(&g_reverbNode, 0, &g_delayNode, 0);
-        
-//        ma_node_attach_output_bus(&g_sound1, 0, &g_delayNode, 0);
-    }
-    
-    {
-        ma_uint32 channels   = ma_engine_get_channels(&g_engine);
-        ma_uint32 sampleRate = ma_engine_get_sample_rate(&g_engine);
-        ma_lpf_node_config lpfNodeConfig = ma_lpf_node_config_init(channels, sampleRate, 500, 12);
-        
-        ma_lpf_node_init(ma_engine_get_node_graph(&g_engine), &lpfNodeConfig, NULL, &g_lpfNode);
-        
-        ma_node_attach_output_bus(&g_lpfNode, 0, ma_engine_get_endpoint(&g_engine), 0);
-        
-        ma_node_attach_output_bus(&g_sound3, 0, &g_lpfNode, 0);
+        ma_sound_set_spatialization_enabled(&g_default_sound_steps[i], false);
+        ma_sound_set_spatialization_enabled(&g_wood_sound_steps[i], false);
+        ma_sound_set_spatialization_enabled(&g_snow_sound_steps[i], false);
+        ma_sound_set_spatialization_enabled(&g_clank_sound_steps[i], false);
     }
     
     cube.init();
+    
+    for (auto& entity : g_ambients)
+    {
+        ma_sound_init_from_file(&g_engine, entity.filename.c_str(), 0, NULL, NULL, &entity.sound);
+        
+        ma_sound_set_spatialization_enabled(&entity.sound, true);
+        ma_sound_set_positioning(&entity.sound, ma_positioning_absolute);
+        ma_sound_set_attenuation_model(&entity.sound, ma_attenuation_model_linear);
+        
+        ma_sound_set_rolloff(&entity.sound, 1.0f);
+        ma_sound_set_min_distance(&entity.sound, 80.0f);
+        ma_sound_set_max_distance(&entity.sound, 1250.0f);
+        
+        ma_sound_set_position(&entity.sound, entity.origin.x, entity.origin.y, entity.origin.z);
+        ma_sound_set_looping(&entity.sound, true);
+        
+        entity.cluster = m_collision.findCluster(entity.origin);
+    }
 }
 
 Q3MapScene::~Q3MapScene() = default;
@@ -225,6 +197,28 @@ void Q3MapScene::loadMap(const std::string &filename)
         }
     }
     
+    auto target_speaker = entities.getAllWithKeyValue("classname", "target_speaker");
+    
+    for (int i = 0; i < target_speaker.size(); ++i)
+    {
+        auto& speaker = target_speaker[i];
+        
+        int spawnflags = -1;
+        speaker.getIntValue("spawnflags", spawnflags);
+        
+        if (spawnflags != 1) continue;
+        
+        glm::vec3 origin = {0, 0, 0};
+        if (speaker.getVec3Value("origin", origin) == false) continue;
+        
+        if (speaker.properties.contains("noise") == false) continue;
+        
+        SoundEntity& entity = g_ambients.emplace_back();
+        
+        entity.filename = "assets/wolf/" + speaker.properties["noise"];
+        entity.origin = origin;
+    }
+    
     m_mesh.initFromBsp(&bsp);
     
     m_pLightGrid->init(bsp);
@@ -242,6 +236,8 @@ void Q3MapScene::loadMap(const std::string &filename)
 //    printf("SURF_SNOW = ");
 //    printBits(sizeof(int), &snow);
 //    printf("\n");
+    
+    m_clusters = bsp.m_clusters;
 }
 
 bool intersection(const glm::vec3& start, const glm::vec3& end, const glm::vec3& mins, const glm::vec3& maxs, glm::vec3& point);
@@ -257,6 +253,16 @@ void Q3MapScene::update(float dt)
     camera_pos.z += 40;
     
     m_pCamera->setTransform(camera_pos, m_pPlayer->forward, m_pPlayer->right, m_pPlayer->up);
+    
+    {
+        glm::vec3 start = m_pPlayer->position;
+        start.z += 40;
+        
+        ma_engine_listener_set_position(&g_engine, 0, start.x, start.y, start.z);
+        
+        ma_engine_listener_set_direction(&g_engine, 0, m_pCamera->getForward().x, m_pCamera->getForward().y, m_pCamera->getForward().z);
+        ma_engine_listener_set_world_up(&g_engine, 0, 0, 0, 1);
+    }
     
     for (auto& monster : m_monsters)
     {
@@ -275,69 +281,20 @@ void Q3MapScene::update(float dt)
         }
     }
     
-    if (Input::isRightMouseButtonClicked())
-    {
-        glm::vec3 start = m_pPlayer->position;
-        start.z += 40;
-        
-        glm::vec3 end = m_monsters[5].position;
-        
-        HitResult result;
-        m_collision.trace(result, start, end, glm::vec3(0), glm::vec3(0));
-        
-        DebugRenderer::getInstance().addLine(start, end, glm::vec3(1), 10.0f);
-        
-        float cutoff = (result.fraction == 1) ? 10000 : 3500;
-        
-        ma_uint32 channels   = ma_engine_get_channels(&g_engine);
-        ma_uint32 sampleRate = ma_engine_get_sample_rate(&g_engine);
-        
-        ma_lpf_config lpfConfig = ma_lpf_config_init(ma_format_f32, channels, sampleRate, cutoff, 12);
-        ma_lpf_reinit(&lpfConfig, &g_lpfNode.lpf);
-        
-        ma_sound_start(&g_sound3);
-    }
-    
     if (Input::isLeftMouseButtonClicked())
     {
-        ma_sound_start(&g_sound1);
+//        ma_sound_start(&g_sound1);
         
         glm::vec3 start = m_pPlayer->position;
-        start.z += 40;
-        
-//        ma_engine_listener_set_position(&g_engine, 0, start.x, start.y, start.z);
-//        
-//        ma_engine_listener_set_direction(&g_engine, 0, m_pCamera->getForward().x, m_pCamera->getForward().y, m_pCamera->getForward().z);
-//        ma_engine_listener_set_world_up(&g_engine, 0, 0, 0, 1);
-        
-        glm::vec3 end = start + m_pCamera->getForward() * 1024.0f;
+        glm::vec3 end = start + m_pCamera->getForward() * 2048.0f;
         
         DebugRenderer::getInstance().addLine(start, end, glm::vec3(1), 10.0f);
         
-        HitResult result;
-        m_collision.trace(result, start, end, glm::vec3(0), glm::vec3(0));
-        
-//        if (result.textureId != -1) {
-//            printf("texture = %s\n", textures[result.textureId].strName);
-//        }
-        
-        float dist1 = glm::length(result.endpos - start);
-        
-        for (const auto& monster : m_monsters)
+        if (auto hitted = traceEntities(start, end))
         {
-            glm::vec3 mins = monster.position + glm::vec3{-15, -15, -24};
-            glm::vec3 maxs = monster.position + glm::vec3{ 15,  15,  48};
-            
-            glm::vec3 point;
-            bool check = intersection(start, end, mins, maxs, point);
-            float dist2 = glm::length(point - start);
-            
-            if (check && dist2 < dist1)
-            {
-                ma_sound_set_position(&g_sound2, monster.position.x, monster.position.y, monster.position.z);
-                ma_sound_start(&g_sound2);
-                break;
-            }
+//            auto pos = hitted->position;
+//            ma_sound_set_position(&g_sound2, pos.x, pos.y, pos.z);
+//            ma_sound_start(&g_sound2);
         }
     }
     
@@ -345,53 +302,6 @@ void Q3MapScene::update(float dt)
     {
         if (step_timer == 0.0f)
         {
-            glm::vec3 start = m_pPlayer->position;
-            
-            HitResult result_up;
-            glm::vec3 end_up = m_pPlayer->position + glm::vec3(0, 0, 1024);
-            m_collision.trace(result_up, start, end_up, glm::vec3(0), glm::vec3(0));
-            
-            HitResult result_forward;
-            glm::vec3 end_forward = m_pPlayer->position + glm::vec3(1024, 0, 0);
-            m_collision.trace(result_forward, start, end_forward, glm::vec3(0), glm::vec3(0));
-            
-            HitResult result_left;
-            glm::vec3 end_left = m_pPlayer->position + glm::vec3(0, 1024, 0);
-            m_collision.trace(result_left, start, end_left, glm::vec3(0), glm::vec3(0));
-            
-            HitResult result_back;
-            glm::vec3 end_back = m_pPlayer->position + glm::vec3(-1024, 0, 0);
-            m_collision.trace(result_back, start, end_back, glm::vec3(0), glm::vec3(0));
-            
-            HitResult result_right;
-            glm::vec3 end_right = m_pPlayer->position + glm::vec3(0, -1024, 0);
-            m_collision.trace(result_right, start, end_right, glm::vec3(0), glm::vec3(0));
-            
-//            float room_depth = (result_forward.fraction + result_back.fraction) * 1024.0;
-//            float room_width = (result_left.fraction + result_right.fraction) * 1024.0;
-//            float room_height = result_up.fraction * 1024.0;
-            
-//            float min_distance = fmin(result_forward.fraction, result_back.fraction);
-//            min_distance = fmin(min_distance, result_left.fraction);
-//            min_distance = fmin(min_distance, result_right.fraction);
-//            min_distance *= 1024;
-            
-//            printf("DEPTH: %.0fm, WIDTH: %.0fm, HEIGHT: %.0fm\n", room_depth, room_width, room_height);
-            
-            // Вычисление максимального расстояния
-//            float max_distance = sqrtf(room_width * room_width +
-//                                       room_height * room_height +
-//                                       room_depth * room_depth);
-            
-//            max_distance = fmax(fmax(room_width, room_height), room_depth);
-            
-//            float decay = 0.8f * max_distance / 2048;
-            float decay = (result_forward.fraction + result_back.fraction + result_left.fraction + result_right.fraction + result_up.fraction) / 5;
-            verblib_set_room_size(&g_reverbNode.reverb, decay);
-            verblib_set_damping(&g_reverbNode.reverb, 0.6);
-            
-            ma_delay_set_decay(&g_delayNode.delay, decay * decay);
-            
             int step_id = rand() % 4;
             
             if (step_id == prev_step_id)
@@ -407,10 +317,15 @@ void Q3MapScene::update(float dt)
             
             int surfaceFlags = m_pMovement->getSurfaceFlags();
             
+            float LO = 0.9f;
+            float HI = 1.1f;
+            float pitch = LO + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-LO)));
+            
             if (surfaceFlags & SURF_WOOD)
             {
                 ma_sound& sound = g_wood_sound_steps[step_id];
                 
+                ma_sound_set_pitch(&sound, pitch);
                 ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
                 ma_sound_start(&sound);
             }
@@ -418,6 +333,7 @@ void Q3MapScene::update(float dt)
             {
                 ma_sound& sound = g_snow_sound_steps[step_id];
                 
+                ma_sound_set_pitch(&sound, pitch);
                 ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
                 ma_sound_start(&sound);
             }
@@ -425,6 +341,7 @@ void Q3MapScene::update(float dt)
             {
                 ma_sound& sound = g_clank_sound_steps[step_id];
                 
+                ma_sound_set_pitch(&sound, pitch);
                 ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
                 ma_sound_start(&sound);
             }
@@ -432,6 +349,7 @@ void Q3MapScene::update(float dt)
             {
                 ma_sound& sound = g_default_sound_steps[step_id];
                 
+                ma_sound_set_pitch(&sound, pitch);
                 ma_sound_set_pan(&sound, is_right_step ? 0.1 : -0.1);
                 ma_sound_start(&sound);
             }
@@ -453,6 +371,22 @@ void Q3MapScene::update(float dt)
     }
     
     DebugRenderer::getInstance().update(dt);
+    
+    int playerCluster = m_collision.findCluster(m_pPlayer->position);
+    
+    for (auto& entity : g_ambients)
+    {
+        int i = (playerCluster * m_clusters.bytesPerCluster) + (entity.cluster >> 3);
+        byte visSet = m_clusters.pBitsets[i];
+        
+        bool isVisible = (visSet & (1 << (entity.cluster & 7))) != 0;
+        
+        if (entity.isVisible != isVisible)
+        {
+            isVisible ? ma_sound_start(&entity.sound) : ma_sound_stop(&entity.sound);
+            entity.isVisible = isVisible;
+        }
+    }
 }
 
 void Q3MapScene::draw()
@@ -479,6 +413,7 @@ void Q3MapScene::draw()
         
         cube.position = (absmins + absmaxs) * 0.5f;
         cube.scale = absmaxs - absmins;
+        cube.color = {1, 1, 1, 1};
         
         cube.draw(*m_pCamera);
     }
@@ -488,7 +423,55 @@ void Q3MapScene::draw()
     glClear(GL_DEPTH_BUFFER_BIT);
     
     studio->drawViewModels(m_pCamera, m_pLightGrid.get());
+    
+//    for (auto& entity : g_ambients)
+//    {
+//        if (!entity.isVisible) continue;
+//        
+//        cube.position = entity.origin;
+//        cube.scale = {8, 8, 8};
+//        cube.color = {1, 0, 0, 1};
+//        
+//        cube.draw(*m_pCamera);
+//    }
 }
+
+#define GLM_ENABLE_EXPERIMENTAL 1
+#include <glm/gtx/norm.hpp>
+
+Monster* Q3MapScene::traceEntities(const glm::vec3 &start, const glm::vec3 &end)
+{
+    HitResult result;
+    m_collision.trace(result, start, end, glm::vec3(0), glm::vec3(0));
+    
+    float maxDist = glm::distance2(result.endpos, start);
+    
+    Monster* nearestMonster = nullptr;
+    float nearestDist = maxDist;
+    
+    for (auto& monster : m_monsters)
+    {
+        glm::vec3 mins = monster.position + glm::vec3{-15, -15, -24};
+        glm::vec3 maxs = monster.position + glm::vec3{ 15,  15,  48};
+        
+        glm::vec3 point;
+        bool check = intersection(start, end, mins, maxs, point);
+        
+        if (check)
+        {
+            float dist = glm::distance2(point, start);
+            
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearestMonster = &monster;
+            }
+        }
+    }
+    
+    return nearestMonster;
+}
+
 
 #include <algorithm>
 using std::min, std::max, std::swap;

@@ -50,7 +50,7 @@ void Q3LightGrid::init(const Quake3BSP& q3bsp)
     }
 }
 
-void Q3LightGrid::getValue(const glm::vec3& pos, glm::vec3& ambient, glm::vec3& color, glm::vec3& dir)
+void Q3LightGrid::getValue(const glm::vec3& pos, glm::vec3& ambient, glm::vec3& color, glm::vec3& dir) const
 {
     if (ambients.empty()) return;
     
@@ -67,7 +67,7 @@ void Q3LightGrid::getValue(const glm::vec3& pos, glm::vec3& ambient, glm::vec3& 
     dir = dirs[index];
 }
 
-int Q3LightGrid::indexForCell(int x, int y, int z)
+int Q3LightGrid::indexForCell(int x, int y, int z) const
 {
     int cellX = min(max(x, 0), lightVolSizeX);
     int cellY = min(max(y, 0), lightVolSizeY);
