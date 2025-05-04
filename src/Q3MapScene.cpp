@@ -219,23 +219,51 @@ void Q3MapScene::loadMap(const std::string &filename)
         entity.origin = origin;
     }
     
+    auto func_door_rotating = entities.getAllWithKeyValue("classname", "func_door_rotating");
+    
+    for (auto& desc : func_door_rotating)
+    {
+        glm::vec3 origin = {0, 0, 0};
+        if (desc.getVec3Value("origin", origin) == false) continue;
+        
+        if (desc.properties.contains("model") == false) continue;
+        
+        std::string& model = desc.properties["model"]; // it looks like "*23"
+        
+        int id = std::stoi(model.substr(1));
+        
+//        printf("func_door_rotating: model = %i \n", id);
+        
+        int faceIndex = bsp.m_models[id].faceIndex;
+        int numOfFaces = bsp.m_models[id].numOfFaces;
+        
+        std::unordered_map<int, bool> processedVertices;
+        
+        for (int i = faceIndex; i < faceIndex + numOfFaces; ++i)
+        {
+            const tBSPFace &face = bsp.m_faces[i];
+            
+            for (int j = face.startIndex; j < face.startIndex + face.numOfIndices; ++j)
+            {
+                unsigned int index = bsp.m_indices[j] + face.startVertIndex;
+                
+                if (processedVertices[index]) {
+                    continue;
+                }
+                
+                tBSPVertex& vertex = bsp.m_verts[index];
+                vertex.vPosition += origin;
+                
+                processedVertices[index] = true;
+            }
+        }
+    }
+    
     m_mesh.initFromBsp(&bsp);
     
     m_pLightGrid->init(bsp);
     
     textures = bsp.m_textures;
-    
-    
-//    int wood = 0x40000;
-//    int snow = 0x400000;
-//    
-//    printf("SURF_WOOD = ");
-//    printBits(sizeof(int), &wood);
-//    printf("\n");
-//    
-//    printf("SURF_SNOW = ");
-//    printBits(sizeof(int), &snow);
-//    printf("\n");
     
     m_clusters = bsp.m_clusters;
 }
