@@ -62,6 +62,8 @@ struct SoundEntity
     glm::vec3 origin;
     
     int cluster;
+    int area;
+    
     bool isVisible = false;
 };
 
@@ -123,7 +125,7 @@ Q3MapScene::Q3MapScene(Camera *camera) : m_pCamera(camera)
         ma_sound_set_position(&entity.sound, entity.origin.x, entity.origin.y, entity.origin.z);
         ma_sound_set_looping(&entity.sound, true);
         
-        entity.cluster = m_collision.findCluster(entity.origin);
+        m_collision.findClusterArea(entity.origin, entity.cluster, entity.area);
     }
 }
 
@@ -400,7 +402,8 @@ void Q3MapScene::update(float dt)
     
     DebugRenderer::getInstance().update(dt);
     
-    int playerCluster = m_collision.findCluster(m_pPlayer->position);
+    int playerCluster, playerArea;
+    m_collision.findClusterArea(m_pPlayer->position, playerCluster, playerArea);
     
     for (auto& entity : g_ambients)
     {
@@ -408,6 +411,11 @@ void Q3MapScene::update(float dt)
         byte visSet = m_clusters.pBitsets[i];
         
         bool isVisible = (visSet & (1 << (entity.cluster & 7))) != 0;
+        
+        if (isVisible)
+        {
+            isVisible = playerArea == entity.area;
+        }
         
         if (entity.isVisible != isVisible)
         {

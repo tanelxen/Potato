@@ -140,7 +140,7 @@ void Q3BspCollision::trace(HitResult &result, const glm::vec3 &start, const glm:
     result.surfaceFlags = work.surfaceFlags;
 }
 
-int Q3BspCollision::findCluster(const glm::vec3 &pos)
+void Q3BspCollision::findClusterArea(const glm::vec3 &pos, int &cluster, int &area)
 {
     int i = 0;
     float distance = 0.0f;
@@ -174,9 +174,9 @@ int Q3BspCollision::findCluster(const glm::vec3 &pos)
     // Return the leaf index (same thing as saying:  return -(i + 1)).
     int leafIndex = ~i;  // Binary operation
     
-    return pImpl->m_leafs[leafIndex].cluster;
+    cluster = pImpl->m_leafs[leafIndex].cluster;
+    area = pImpl->m_leafs[leafIndex].area;
 }
-
 
 void Q3BspCollision::Impl::trace(trace_work& work, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs)
 {

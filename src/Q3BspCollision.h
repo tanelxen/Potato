@@ -35,7 +35,7 @@ public:
     
     void trace(HitResult& result, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs) const;
     
-    int findCluster(const glm::vec3 &pos);
+    void findClusterArea(const glm::vec3 &pos, int &cluster, int &area);
 
 private:
     struct Impl;
