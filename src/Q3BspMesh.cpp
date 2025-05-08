@@ -7,6 +7,8 @@
 
 #include <glad/glad.h>
 
+#include "../vendor/stb_image_write.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
 
@@ -33,6 +35,8 @@ static Shader vl_shader;
 
 static void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas);
 static GLuint generateLightmap(const TextureAtlas& atlas);
+
+static bool textures_alpha[MAX_TEXTURES];
 
 void Q3BspMesh::initFromBsp(Quake3BSP* bsp)
 {
@@ -136,7 +140,7 @@ void Q3BspMesh::GenerateTexture()
         if (image == nullptr)
         {
             std::string tgaPath = path + ".tga";
-            image = stbi_load(tgaPath.c_str(), &width, &height, &num_channels, 3);
+            image = stbi_load(tgaPath.c_str(), &width, &height, &num_channels, 4);
         }
 
         if (image)
@@ -145,15 +149,21 @@ void Q3BspMesh::GenerateTexture()
             glGenTextures(1, &textureID);
             glBindTexture(GL_TEXTURE_2D, textureID);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            
+            bool hasAlpha = num_channels == 4;
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+            GLenum internalformat = hasAlpha ? GL_SRGB_ALPHA : GL_SRGB;
+            GLenum format = hasAlpha ? GL_RGBA : GL_RGB;
+            
+            glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, GL_UNSIGNED_BYTE, image);
             glGenerateMipmap(GL_TEXTURE_2D);
 
             m_textures[i] = textureID;
+            textures_alpha[i] = hasAlpha;
         }
         else
         {
@@ -223,13 +233,19 @@ void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     
+    // ==================== OPAQUE ===============
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
+    
+    glDisable(GL_BLEND);
+    
+    lm_shader.bind();
+    lm_shader.setUniform("MVP", mvp);
     
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, m_lightmap);
     
-    for (auto surface : lm_surfaces)
+    for (auto surface : lm_surfaces_opaque)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, surface.texId);
@@ -240,18 +256,58 @@ void Q3BspMesh::renderFaces(glm::mat4x4& mvp)
     vl_shader.bind();
     vl_shader.setUniform("MVP", mvp);
     
-    glDisable(GL_CULL_FACE);
-    
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
     
-    for (auto surface : vl_surfaces)
+    for (auto surface : vl_surfaces_opaque)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, surface.texId);
         
         glDrawElements(GL_TRIANGLES, surface.numVerts, GL_UNSIGNED_INT, (void *)surface.bufferOffset);
     }
+    
+    // ==================== TRANSLUCENT ===============
+    glDisable(GL_CULL_FACE);
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    
+    glPolygonOffset(-8, 1);
+    
+    lm_shader.bind();
+    lm_shader.setUniform("MVP", mvp);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_lightmap);
+    
+    for (auto surface : lm_surfaces_alpha)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, surface.texId);
+        
+        glDrawElements(GL_TRIANGLES, surface.numVerts, GL_UNSIGNED_INT, (void *)surface.bufferOffset);
+    }
+    
+    glPolygonOffset(-16, 1);
+    
+    vl_shader.bind();
+    vl_shader.setUniform("MVP", mvp);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    for (auto surface : vl_surfaces_alpha)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, surface.texId);
+        
+        glDrawElements(GL_TRIANGLES, surface.numVerts, GL_UNSIGNED_INT, (void *)surface.bufferOffset);
+    }
+    
+    glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
 void Q3BspMesh::makeLightmappedIndices()
@@ -274,8 +330,11 @@ void Q3BspMesh::makeLightmappedIndices()
     
     for (auto pair : indicesByTexture)
     {
-        auto& surface = lm_surfaces.emplace_back();
-        surface.texId = m_textures[pair.first];
+        int texture = pair.first;
+        auto& array = textures_alpha[texture] ? lm_surfaces_alpha : lm_surfaces_opaque;
+        
+        auto& surface = array.emplace_back();
+        surface.texId = m_textures[texture];
         surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
         surface.numVerts = (uint32_t)pair.second.size();
         
@@ -303,8 +362,11 @@ void Q3BspMesh::makeVertexlitIndices()
     
     for (auto pair : indicesByTexture)
     {
-        auto& surface = vl_surfaces.emplace_back();
-        surface.texId = m_textures[pair.first];
+        int texture = pair.first;
+        auto& array = textures_alpha[texture] ? vl_surfaces_alpha : vl_surfaces_opaque;
+        
+        auto& surface = array.emplace_back();
+        surface.texId = m_textures[texture];
         surface.bufferOffset = (uint32_t)(indices.size() * sizeof(uint32_t));
         surface.numVerts = (uint32_t)pair.second.size();
         

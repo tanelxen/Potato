@@ -45,6 +45,9 @@ private:
     
     std::vector<unsigned int> indices;
     
-    std::vector<Surface> lm_surfaces;
-    std::vector<Surface> vl_surfaces;
+    std::vector<Surface> lm_surfaces_opaque;
+    std::vector<Surface> lm_surfaces_alpha;
+    
+    std::vector<Surface> vl_surfaces_opaque;
+    std::vector<Surface> vl_surfaces_alpha;
 };

@@ -59,5 +59,5 @@ void main()
 
     FragColor = texture(s_texture, uv) * vec4(light, 1.0);
     
-    FragColor = fromLinear(FragColor);
+//    FragColor = fromLinear(FragColor);
 }

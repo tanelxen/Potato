@@ -92,6 +92,8 @@ void Application::run()
     
     glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
+    glEnable(GL_FRAMEBUFFER_SRGB);
+    
     while (!glfwWindowShouldClose(m_pWindow))
     {
         double currTime = glfwGetTime();
