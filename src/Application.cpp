@@ -6,6 +6,7 @@
 //
 
 #include <stdio.h>
+#include <thread>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -99,7 +100,12 @@ void Application::run()
         double currTime = glfwGetTime();
         double elapsedTime = currTime - lastTime;
         
-        if (elapsedTime < desiredFrameTime) continue;
+        if (elapsedTime < desiredFrameTime)
+        {
+            long long diff = (desiredFrameTime - elapsedTime) * 1000;
+            std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+            continue;
+        }
         
         lastTime = currTime;
 
