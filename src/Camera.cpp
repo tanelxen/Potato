@@ -14,7 +14,7 @@
 void Camera::setAspectRatio(float aspectRatio)
 {
     float worldFOV = glm::radians(55.0f);
-    projection = glm::perspective(worldFOV, aspectRatio, 0.1f, 4096.0f);
+    projection = glm::perspective(worldFOV, aspectRatio, 0.1f, 8192.0f);
     
     float weaponFOV = glm::radians(54.0f);
     weaponProjection = glm::perspective(weaponFOV, aspectRatio, 0.1f, 256.0f);

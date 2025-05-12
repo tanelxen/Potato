@@ -11,7 +11,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Q3MapScene.h"
+//#include "Q3MapScene.h"
 #include "Camera.h"
 
 #include "Input.h"
@@ -19,6 +19,7 @@
 
 #include "Application.h"
 
+#include "SourceMapScene.h"
 
 static void error_callback(int e, const char *d) { printf("Error %d: %s\n", e, d); }
 
@@ -68,7 +69,7 @@ Application::Application()
     printf("device: %s\n", device);
     
     m_pCamera = new Camera();
-    m_pScene = new Q3MapScene(m_pCamera);
+    m_pScene = new SourceMapScene(m_pCamera);
     
     glfwSwapInterval(0);
     glFrontFace(GL_CCW);

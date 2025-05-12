@@ -342,6 +342,8 @@ void Q3BspMesh::makeLightmappedIndices()
     }
 }
 
+#define SURFACE_SKY 0x4
+
 void Q3BspMesh::makeVertexlitIndices()
 {
     std::unordered_map<int, std::vector<int>> indicesByTexture;
@@ -363,6 +365,19 @@ void Q3BspMesh::makeVertexlitIndices()
     for (auto pair : indicesByTexture)
     {
         int texture = pair.first;
+        
+//        const char* str = g_bsp->m_textures[texture].strName;
+//        auto name = std::string(str);
+        
+        int flags = g_bsp->m_textures[texture].flags;
+        
+        if (flags & SURFACE_SKY) continue;
+        
+//        if (name.find("skies/sky_") != std::string::npos)
+//        {
+//            continue;
+//        }
+        
         auto& array = textures_alpha[texture] ? vl_surfaces_alpha : vl_surfaces_opaque;
         
         auto& surface = array.emplace_back();

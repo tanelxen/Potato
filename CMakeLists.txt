@@ -46,6 +46,14 @@ add_executable( ${PROJECT_NAME}
         src/PlayerMovement.cpp
         src/PlayerMovement.h
         
+        src/SourceBSPTypes.h
+        src/SourceBSPAsset.cpp
+        src/SourceBSPAsset.h
+        src/SourceBspMesh.cpp
+        src/SourceBspMesh.h
+        src/SourceMapScene.cpp
+        src/SourceMapScene.h
+        
         src/Player.cpp
         src/Player.h
                

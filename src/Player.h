@@ -35,3 +35,21 @@ private:
     PlayerMovement* m_pMovement;
     glm::vec3 velocity = {0, 0, 0};
 };
+
+class PlayerDebug
+{
+public:
+    PlayerDebug();
+    
+    void update(float dt);
+    
+    glm::vec3 position = {0, 128, 256};
+    
+    glm::vec3 forward = {0, 0, 0};
+    glm::vec3 right = {0, 0, 0};
+    glm::vec3 up = {0, 0, 0};
+    
+    float pitch = -0.5;
+    float yaw = -1.57;
+
+};

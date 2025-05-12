@@ -18,7 +18,7 @@ private:
     struct GLFWwindow* m_pWindow;
     
     class Camera* m_pCamera;
-    class Q3MapScene* m_pScene;
+    class SourceMapScene* m_pScene;
     
     void updateInputState();
 };
