@@ -88,6 +88,8 @@ enum LumpTypes
     LUMP_OVERLAY_FADES = 60,             // Fade distances for overlays
 };
 
+std::string extractBaseTexture(const std::string& materialName);
+
 bool SourceBSPAsset::initFromFile(const std::string &filename)
 {
     FILE* fp = fopen(filename.c_str(), "rb" );
@@ -145,6 +147,8 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
         {
             c = tolower(c);
         }
+        
+        material.name = extractBaseTexture(material.name);
     }
     
     delete [] stringData;
@@ -185,6 +189,48 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
     fseek(fp, lumps[LUMP_FACES].fileofs, SEEK_SET);
     fread(m_faces.data(), numFaces, sizeof(dface_t), fp);
     
+    int numLightmapSamples = lumps[LUMP_LIGHTING].filelen / sizeof(ColorRGBExp32);
+    m_lightmap.resize(numLightmapSamples);
+    fseek(fp, lumps[LUMP_LIGHTING].fileofs, SEEK_SET);
+    fread(m_lightmap.data(), numLightmapSamples, sizeof(ColorRGBExp32), fp);
+    
     fclose(fp);
     return (fp);
+}
+
+std::string extractBaseTexture(const std::string& materialName)
+{
+    if (materialName.rfind("maps/", 0) == 0)
+    {
+        // Отбросим "maps/имя_карты/"
+        size_t secondSlash = materialName.find('/', 5);
+        
+        if (secondSlash != std::string::npos)
+        {
+            std::string sub = materialName.substr(secondSlash + 1);
+            
+            // Отбросим координаты в конце
+            size_t underscore = sub.find_last_of('_');
+            
+            if (underscore != std::string::npos) {
+                sub = sub.substr(0, underscore);
+            }
+            
+            underscore = sub.find_last_of('_');
+            
+            if (underscore != std::string::npos) {
+                sub = sub.substr(0, underscore);
+            }
+            
+            underscore = sub.find_last_of('_');
+            
+            if (underscore != std::string::npos) {
+                sub = sub.substr(0, underscore);
+            }
+            
+            return sub;
+        }
+    }
+    
+    return materialName;
 }

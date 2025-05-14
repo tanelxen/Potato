@@ -54,11 +54,11 @@ void SourceMapScene::loadMap(const std::string &filename)
         float yaw = 0;
         glm::vec3 position = {0, 0, 0};
         
-        int angle = 0;
+        glm::vec3 angles = {0, 0, 0};
         
-        if (spawnPoint.getIntValue("angle", angle))
+        if (spawnPoint.getVec3Value("angles", angles))
         {
-            yaw = radians(angle);
+            yaw = radians(angles.y);
         }
         
         glm::vec3 origin = {0, 0, 0};

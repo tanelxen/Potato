@@ -10,6 +10,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+#define MAX_TEXTURES 1000
+
 struct SourceBSPAsset;
 
 struct mvert_t
@@ -22,6 +24,7 @@ struct mvert_t
 
 struct mface_t
 {
+    unsigned int material;
     unsigned int firstVert;
     unsigned int numVerts;
 };
@@ -41,6 +44,8 @@ private:
     unsigned int ibo;
 
     unsigned int missing_id;
+    
+    unsigned int m_textures[MAX_TEXTURES];
     
     void initBuffers();
     void generateTextures();

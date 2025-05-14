@@ -114,3 +114,9 @@ struct dmodel_t
     int32_t    headnode;        // index into node array
     int32_t    firstface, numfaces;    // index into face array
 };
+
+struct ColorRGBExp32
+{
+    byte r, g, b;
+    signed char exponent;
+};

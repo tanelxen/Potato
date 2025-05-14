@@ -53,6 +53,8 @@ add_executable( ${PROJECT_NAME}
         src/SourceBspMesh.h
         src/SourceMapScene.cpp
         src/SourceMapScene.h
+        src/VTFAsset.cpp
+        src/VTFAsset.h
         
         src/Player.cpp
         src/Player.h

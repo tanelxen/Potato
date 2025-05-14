@@ -40,4 +40,6 @@ struct SourceBSPAsset
     std::vector<dtexinfo_t> m_texinfos;
     
     std::vector<dplane_t> m_planes;
+    
+    std::vector<ColorRGBExp32> m_lightmap;
 };

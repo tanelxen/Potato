@@ -14,25 +14,34 @@
 #include <glad/glad.h>
 #include "../vendor/stb_image.h"
 
+#include <unordered_map>
+
+static SourceBSPAsset* g_bsp = nullptr;
 static Shader shader;
+
+unsigned int loadTexture(std::string filename);
 
 void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
 {
+    g_bsp = bsp;
+    
     faces.reserve(bsp->m_faces.size());
     
     for (auto& bspFace : bsp->m_faces)
     {
         if (bspFace.dispinfo != -1) continue;
         
+        auto& texinfo = bsp->m_texinfos[bspFace.texinfo];
+        
+        auto& texture_name = bsp->m_materials[texinfo.texdata].name;
+        if (texture_name == "tools/toolstrigger") continue;
+        
         mface_t& face = faces.emplace_back();
         
         face.firstVert = indices.size();
         face.numVerts = 0;
         
-        auto& texinfo = bsp->m_texinfos[bspFace.texinfo];
-        
-        auto& texture_name = bsp->m_materials[texinfo.texdata].name;
-        if (texture_name == "tools/toolstrigger") continue;
+        face.material = texinfo.texdata;
         
         auto& reflect = bsp->m_materials[texinfo.texdata].reflecivity;
         glm::vec3 color = glm::vec3(sqrt(reflect.x), sqrt(reflect.y), sqrt(reflect.z));
@@ -93,13 +102,15 @@ void SourceBspMesh::renderFaces(glm::mat4x4 &mvp)
     glBindVertexArray(vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     
-//    glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
     
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, missing_id);
+//    glBindTexture(GL_TEXTURE_2D, missing_id);
     
     for (auto& face : faces)
     {
+        glBindTexture(GL_TEXTURE_2D, m_textures[face.material]);
         glDrawElements(GL_TRIANGLES, face.numVerts, GL_UNSIGNED_INT, (void *)(face.firstVert * sizeof(uint32_t)));
     }
 }
@@ -163,4 +174,28 @@ void SourceBspMesh::generateTextures()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(image);
+    
+    std::unordered_map<std::string, GLuint> cache;
+    
+    for (int i = 0; i < g_bsp->m_materials.size(); i++)
+    {
+        auto& name = g_bsp->m_materials[i].name;
+        
+        if (cache.contains(name))
+        {
+            m_textures[i] = cache.at(name);
+            continue;
+        }
+        
+        std::string path = "assets/hl2/materials/";
+        path.append(g_bsp->m_materials[i].name);
+        path.append(".vtf");
+        
+        GLuint id = loadTexture(path);
+        
+        if (id == 0) id = missing_id;
+        
+        cache[name] = id;
+        m_textures[i] = id;
+    }
 }
