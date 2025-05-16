@@ -31,13 +31,13 @@ void Q3LightGrid::init(const Quake3BSP& q3bsp)
     {
         const auto& cell = q3bsp.m_lightVolumes[i];
         
-        ambients[i].r = cell.ambient[0] / 255.0;
-        ambients[i].g = cell.ambient[1] / 255.0;
-        ambients[i].b = cell.ambient[2] / 255.0;
+        ambients[i].x = cell.ambient[0] / 255.0;
+        ambients[i].y = cell.ambient[1] / 255.0;
+        ambients[i].z = cell.ambient[2] / 255.0;
         
-        directionals[i].r = cell.directional[0] / 255.0;
-        directionals[i].g = cell.directional[1] / 255.0;
-        directionals[i].b = cell.directional[2] / 255.0;
+        directionals[i].x = cell.directional[0] / 255.0;
+        directionals[i].y = cell.directional[1] / 255.0;
+        directionals[i].z = cell.directional[2] / 255.0;
         
         float lattitude = radians(cell.dir[1] * 360.0 / 255.0);
         float longitude = radians(cell.dir[0] * 360.0 / 255.0);

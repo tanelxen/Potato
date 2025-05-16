@@ -94,6 +94,7 @@ add_executable( ${PROJECT_NAME}
         src/verblib.h
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLM_FORCE_XYZW_ONLY)
 
 #set(SHADERS_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders")
 #file(GLOB_RECURSE SHADER_FILES "${SHADERS_FOLDER}/*")
@@ -106,9 +107,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui)
 
 #file(COPY assets DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}")
 
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/assets
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/assets
-)
+#add_custom_command(
+#        TARGET ${PROJECT_NAME} POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+#        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/assets
+#)
