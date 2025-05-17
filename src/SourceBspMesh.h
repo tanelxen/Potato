@@ -20,11 +20,13 @@ struct mvert_t
     glm::vec3 nrm;
     glm::vec3 clr;
     glm::vec2 uv1;
+    glm::vec2 uv2;
 };
 
 struct mface_t
 {
     unsigned int material;
+    unsigned int lightmap;
     unsigned int firstVert;
     unsigned int numVerts;
 };

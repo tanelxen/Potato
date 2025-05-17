@@ -6,8 +6,10 @@ layout (location = 0) in vec4 position;
 layout (location = 1) in vec4 normal;
 layout (location = 2) in vec3 color;
 layout (location = 3) in vec2 in_texCoord;
+layout (location = 4) in vec2 in_lmapCoord;
 
 out vec2 g_TexCoord;
+out vec2 g_LmapCoord;
 out vec3 g_color;
 out float shade;
 
@@ -17,6 +19,7 @@ void main()
 {
     gl_Position = MVP * position;
     g_TexCoord = in_texCoord;
+    g_LmapCoord = in_lmapCoord;
     shade = shadeForNormal(normal);
     g_color = color;
 }
@@ -53,11 +56,13 @@ float shadeForNormal(vec4 normal)
 #version 410 core
 
 in vec2 g_TexCoord;
+in vec2 g_LmapCoord;
 in vec3 g_color;
 in float shade;
 
 //Texture samplers
 uniform sampler2D s_bspTexture;
+uniform sampler2D s_bspLightmap;
 
 //final color
 out vec4 FragColor;
@@ -78,8 +83,9 @@ vec4 fromLinear(vec4 linearRGB)
 void main()
 {
     vec4 o_texture  = texture(s_bspTexture, g_TexCoord);
+    vec4 o_lightmap = texture(s_bspLightmap, g_LmapCoord);
     
-    FragColor = vec4(g_color, 1.0) * vec4(shade, shade, shade, 1.0);
+    FragColor = o_texture * o_lightmap;// * vec4(shade, shade, shade, 1.0);
     
 //    FragColor.rgb = adjustExposure(FragColor.rgb, 3);
 }

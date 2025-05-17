@@ -86,8 +86,16 @@ struct dface_t
 
 struct dtexinfo_t
 {
-    float    textureVecs[2][4];    // [s/t][xyz offset]
-    float    lightmapVecs[2][4];    // [s/t][xyz offset] - length is in units of texels/area
+    glm::vec3   textureVecS;
+    float       textureOffsetS;
+    glm::vec3   textureVecT;
+    float       textureOffsetT;
+    
+    glm::vec3   lightmapSVec;
+    float       lightmapSOffset;
+    glm::vec3   lightmapTVec;
+    float       lightmapTOffset;
+    
     int    flags;            // miptex flags    overrides
     int    texdata;        // Pointer to texture name, size, etc.
 };

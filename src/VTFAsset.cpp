@@ -12,6 +12,8 @@
 
 size_t computeMipsSize(int width, int height, int mipcount, float bpp);
 
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+
 unsigned int loadTexture(std::string filename)
 {
     FILE* fp = fopen(filename.c_str(), "rb" );
@@ -120,6 +122,8 @@ unsigned int loadTexture(std::string filename)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16);
     
     if (compressed)
     {

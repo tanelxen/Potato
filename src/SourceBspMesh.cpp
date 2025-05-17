@@ -13,6 +13,7 @@
 
 #include <glad/glad.h>
 #include "../vendor/stb_image.h"
+#include "../vendor/stb_image_write.h"
 
 #include <unordered_map>
 
@@ -21,11 +22,28 @@ static Shader shader;
 
 unsigned int loadTexture(std::string filename);
 
+#define BLOCK_SIZE 1024
+GLuint allocated[BLOCK_SIZE];
+GLubyte *lightmap_buffer;
+GLuint current_lightmap_texture = 0;
+GLuint g_lightmaps[8];
+
+//lightmaps = new GLint[models[0].numfaces]
+
+void LM_InitBlock();
+bool LM_AllocBlock(int w, int h, int *x, int *y);
+void LM_UploadBlock();
+
+void CreateLightmapTex(ColorRGBExp32 *samples, GLubyte *dest, dface_t *face);
+
 void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
 {
     g_bsp = bsp;
     
     faces.reserve(bsp->m_faces.size());
+    
+    lightmap_buffer = new GLubyte[BLOCK_SIZE*BLOCK_SIZE*3];
+    LM_InitBlock();
     
     for (auto& bspFace : bsp->m_faces)
     {
@@ -46,11 +64,30 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
         auto& reflect = bsp->m_materials[texinfo.texdata].reflecivity;
         glm::vec3 color = glm::vec3(sqrt(reflect.x), sqrt(reflect.y), sqrt(reflect.z));
         
-        auto s = texinfo.textureVecs[0];
-        auto t = texinfo.textureVecs[1];
+        int textureWidth = bsp->m_materials[texinfo.texdata].width;
+        int textureHeight = bsp->m_materials[texinfo.texdata].height;
         
-        int width = bsp->m_materials[texinfo.texdata].width;
-        int height = bsp->m_materials[texinfo.texdata].height;
+        int lightmapWidth = bspFace.LightmapTextureSizeInLuxels[0] + 1;
+        int lightmapHeight = bspFace.LightmapTextureSizeInLuxels[1] + 1;
+        int lightmapX;
+        int lightmapY;
+        
+        if (bspFace.lightofs != -1)
+        {
+            if(!LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY))
+            {
+                LM_UploadBlock();
+                LM_InitBlock();
+                
+                LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY);
+            }
+        }
+        
+        face.lightmap = current_lightmap_texture;
+        
+        ColorRGBExp32 *samples = bsp->m_lightmap.data();
+        GLubyte *dest = lightmap_buffer + (lightmapY * BLOCK_SIZE + lightmapX) * 3;
+        CreateLightmapTex(samples, dest, &bspFace);
         
         auto& plane = bsp->m_planes[bspFace.planenum];
         
@@ -63,16 +100,29 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
             
             auto& edge = bsp->m_edges[edgeIndex];
             
-            auto& v1 = bsp->m_verts[edge.v[(surfEdge < 0) ? 1 : 0]];
+            auto& pos = bsp->m_verts[edge.v[(surfEdge < 0) ? 1 : 0]];
             
-            float u = (v1.x * s[0] + v1.y * s[1] + v1.z * s[2] + s[3]) / width;
-            float v = (v1.x * t[0] + v1.y * t[1] + v1.z * t[2] + t[3]) / height;
+            glm::vec2 texUV;
+            texUV.x = (glm::dot(pos, texinfo.textureVecS) + texinfo.textureOffsetS) / textureWidth;
+            texUV.y = (glm::dot(pos, texinfo.textureVecT) + texinfo.textureOffsetT) / textureHeight;
+            
+            glm::vec2 lightmapUV;
+            
+            if (bspFace.lightofs != -1)
+            {
+                float offsetS = texinfo.lightmapSOffset - bspFace.LightmapTextureMinsInLuxels[0] + lightmapX;
+                float offsetT = texinfo.lightmapTOffset - bspFace.LightmapTextureMinsInLuxels[1] + lightmapY;
+                
+                lightmapUV.x = (glm::dot(pos, texinfo.lightmapSVec) + offsetS + 0.5f) / BLOCK_SIZE;
+                lightmapUV.y = (glm::dot(pos, texinfo.lightmapTVec) + offsetT + 0.5f) / BLOCK_SIZE;
+            }
             
             mvert_t vert;
-            vert.pos = v1;
+            vert.pos = pos;
             vert.clr = color;
             vert.nrm = plane.normal;
-            vert.uv1 = glm::vec2(u, v);
+            vert.uv1 = texUV;
+            vert.uv2 = lightmapUV;
             
             faceVerts.push_back(vert);
         }
@@ -90,6 +140,8 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
         }
     }
     
+    LM_UploadBlock();
+    
     initBuffers();
     generateTextures();
 }
@@ -105,12 +157,17 @@ void SourceBspMesh::renderFaces(glm::mat4x4 &mvp)
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     
-    glActiveTexture(GL_TEXTURE0);
+//    glActiveTexture(GL_TEXTURE0);
 //    glBindTexture(GL_TEXTURE_2D, missing_id);
     
     for (auto& face : faces)
     {
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_textures[face.material]);
+        
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, g_lightmaps[face.lightmap]);
+        
         glDrawElements(GL_TRIANGLES, face.numVerts, GL_UNSIGNED_INT, (void *)(face.firstVert * sizeof(uint32_t)));
     }
 }
@@ -146,12 +203,16 @@ void SourceBspMesh::initBuffers()
     glEnableVertexAttribArray(VERT_DIFFUSE_TEX_COORD_LOC);
     glVertexAttribPointer(VERT_DIFFUSE_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(mvert_t), (void*)offsetof(mvert_t, uv1));
     
+    glEnableVertexAttribArray(VERT_LIGHTMAP_TEX_COORD_LOC);
+    glVertexAttribPointer(VERT_LIGHTMAP_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(mvert_t), (void*)offsetof(mvert_t, uv2));
+    
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     shader.init("assets/shaders/vbsp.glsl");
     shader.bind();
     glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
+    glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
     shader.unbind();
 }
 
@@ -198,4 +259,112 @@ void SourceBspMesh::generateTextures()
         cache[name] = id;
         m_textures[i] = id;
     }
+}
+
+
+float pow255(float a, float p)
+{
+    return glm::pow(a/255.0f, p) * 255.0f;
+}
+
+void CreateLightmapTex(ColorRGBExp32 *samples, GLubyte *dest, dface_t *face)
+{
+    ColorRGBExp32 *sample;
+    int lightmapW = face->LightmapTextureSizeInLuxels[0] + 1;
+    int lightmapH = face->LightmapTextureSizeInLuxels[1] + 1;
+    
+    if(lightmapW * lightmapH == 0 || lightmapW * lightmapH > 20000)
+    {
+//        LOG("face %d: lightmap size %dx%d\n", i, lightmapW, lightmapH);
+        return;
+    }
+
+    float p = 1.0f/2.2f;
+    sample = samples+(face->lightofs/4);
+    
+    for(int y = 0; y < lightmapH; y++)
+    {
+        for(int x = 0; x < lightmapW; x++)
+        {
+            float f = glm::pow(2.0f, sample->exponent);
+            
+            dest[0] = glm::clamp((int)pow255(sample->r*f, p),0,255);
+            dest[1] = glm::clamp((int)pow255(sample->g*f, p),0,255);
+            dest[2] = glm::clamp((int)pow255(sample->b*f, p),0,255);
+            
+            dest+=3;
+            sample++;
+        }
+        
+        dest += (BLOCK_SIZE-lightmapW) * 3;
+    }
+}
+
+void LM_InitBlock()
+{
+    memset(allocated, 0, sizeof(allocated));
+    memset(lightmap_buffer, 0, BLOCK_SIZE*BLOCK_SIZE*3);
+}
+
+bool LM_AllocBlock(int w, int h, int *x, int *y)
+{
+    int    i, j;
+    GLuint    best, best2;
+    
+    best = BLOCK_SIZE;
+    
+    for( i = 0; i < BLOCK_SIZE - w; i++ )
+    {
+        best2 = 0;
+        
+        for( j = 0; j < w; j++ )
+        {
+            if( allocated[i+j] >= best )
+                break;
+            if( allocated[i+j] > best2 )
+                best2 = allocated[i+j];
+        }
+        
+        if( j == w )
+        {
+            // this is a valid spot
+            *x = i;
+            *y = best = best2;
+        }
+    }
+    
+    if( best + h > BLOCK_SIZE )
+        return false;
+    
+    for( i = 0; i < w; i++ )
+        allocated[*x + i] = best + h;
+    
+    return true;
+}
+
+#include <format>
+
+void LM_UploadBlock()
+{
+    printf("Upload lightmap block %d\n", current_lightmap_texture);
+    
+    std::string filename = std::format("lightmap_{}.png", current_lightmap_texture);
+    stbi_write_png(filename.c_str(), BLOCK_SIZE, BLOCK_SIZE, 3, lightmap_buffer, BLOCK_SIZE * 3);
+    
+    GLuint id;
+    glGenTextures(1, &id);
+    
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BLOCK_SIZE, BLOCK_SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, lightmap_buffer);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    g_lightmaps[current_lightmap_texture] = id;
+    current_lightmap_texture++;
 }

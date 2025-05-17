@@ -8,6 +8,7 @@
 #include "SourceBSPAsset.h"
 
 #include <iostream>
+#include <fstream>
 
 enum LumpTypes
 {
@@ -193,6 +194,17 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
     m_lightmap.resize(numLightmapSamples);
     fseek(fp, lumps[LUMP_LIGHTING].fileofs, SEEK_SET);
     fread(m_lightmap.data(), numLightmapSamples, sizeof(ColorRGBExp32), fp);
+    
+//    {
+//        int pakLength = lumps[LUMP_PAKFILE].filelen;
+//        std::vector<char> pakData;
+//        pakData.resize(pakLength);
+//        fseek(fp, lumps[LUMP_PAKFILE].fileofs, SEEK_SET);
+//        fread(pakData.data(), pakLength, sizeof(char), fp);
+//        
+//        std::ofstream file("myfile.zip", std::ios::binary);
+//        file.write(pakData.data(), pakLength);
+//    }
     
     fclose(fp);
     return (fp);
