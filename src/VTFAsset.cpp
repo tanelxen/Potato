@@ -14,6 +14,15 @@ size_t computeMipsSize(int width, int height, int mipcount, float bpp);
 
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
 
+//#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
+//#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+//#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+//#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#define GL_COMPRESSED_SRGB_S3TC_DXT1_EXT 0x8C4C
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT 0x8C4D
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT 0x8C4E
+#define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
+
 unsigned int loadTexture(std::string filename)
 {
     FILE* fp = fopen(filename.c_str(), "rb" );
@@ -67,15 +76,15 @@ unsigned int loadTexture(std::string filename)
     {
         texSize = ((width + 3) / 4) * ((height + 3) / 4) * 8;
         offset += computeMipsSize(width, height, header.numMipLevels, 0.5f) * faces;
-        ifmt = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        ifmt = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
         fmt = GL_RGB;
         compressed=true;
     }
     else if (header.imageFormat == IMAGE_FORMAT_DXT5)
     {
         texSize = ((width + 3) / 4) * ((height + 3) / 4) * 16;
-        offset += computeMipsSize(width,height,header.numMipLevels,1)*faces;
-        ifmt = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        offset += computeMipsSize(width,height,header.numMipLevels, 1) * faces;
+        ifmt = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
         fmt = GL_RGBA;
         compressed=true;
     }

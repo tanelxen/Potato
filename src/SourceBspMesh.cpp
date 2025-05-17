@@ -24,17 +24,15 @@ unsigned int loadTexture(std::string filename);
 
 #define BLOCK_SIZE 1024
 GLuint allocated[BLOCK_SIZE];
-GLubyte *lightmap_buffer;
-GLuint current_lightmap_texture = 0;
+float lightmap_buffer[BLOCK_SIZE*BLOCK_SIZE*3];
+GLuint current_lightmap_page = 0;
 GLuint g_lightmaps[8];
-
-//lightmaps = new GLint[models[0].numfaces]
 
 void LM_InitBlock();
 bool LM_AllocBlock(int w, int h, int *x, int *y);
 void LM_UploadBlock();
 
-void CreateLightmapTex(ColorRGBExp32 *samples, GLubyte *dest, dface_t *face);
+void CreateLightmapTex(ColorRGBExp32 *samples, float *dest, dface_t *face);
 
 void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
 {
@@ -42,7 +40,6 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
     
     faces.reserve(bsp->m_faces.size());
     
-    lightmap_buffer = new GLubyte[BLOCK_SIZE*BLOCK_SIZE*3];
     LM_InitBlock();
     
     for (auto& bspFace : bsp->m_faces)
@@ -69,8 +66,8 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
         
         int lightmapWidth = bspFace.LightmapTextureSizeInLuxels[0] + 1;
         int lightmapHeight = bspFace.LightmapTextureSizeInLuxels[1] + 1;
-        int lightmapX;
-        int lightmapY;
+        int lightmapX = 0;
+        int lightmapY = 0;
         
         if (bspFace.lightofs != -1)
         {
@@ -81,13 +78,13 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
                 
                 LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY);
             }
+            
+            ColorRGBExp32 *samples = bsp->m_lightmap.data();
+            float *dest = lightmap_buffer + (lightmapY * BLOCK_SIZE + lightmapX) * 3;
+            CreateLightmapTex(samples, dest, &bspFace);
+            
+            face.lightmap = current_lightmap_page;
         }
-        
-        face.lightmap = current_lightmap_texture;
-        
-        ColorRGBExp32 *samples = bsp->m_lightmap.data();
-        GLubyte *dest = lightmap_buffer + (lightmapY * BLOCK_SIZE + lightmapX) * 3;
-        CreateLightmapTex(samples, dest, &bspFace);
         
         auto& plane = bsp->m_planes[bspFace.planenum];
         
@@ -262,12 +259,8 @@ void SourceBspMesh::generateTextures()
 }
 
 
-float pow255(float a, float p)
-{
-    return glm::pow(a/255.0f, p) * 255.0f;
-}
 
-void CreateLightmapTex(ColorRGBExp32 *samples, GLubyte *dest, dface_t *face)
+void CreateLightmapTex(ColorRGBExp32 *samples, float *dest, dface_t *face)
 {
     ColorRGBExp32 *sample;
     int lightmapW = face->LightmapTextureSizeInLuxels[0] + 1;
@@ -286,17 +279,17 @@ void CreateLightmapTex(ColorRGBExp32 *samples, GLubyte *dest, dface_t *face)
     {
         for(int x = 0; x < lightmapW; x++)
         {
-            float f = glm::pow(2.0f, sample->exponent);
+            float m = glm::pow(2.0f, sample->exponent) / 255.0;
             
-            dest[0] = glm::clamp((int)pow255(sample->r*f, p),0,255);
-            dest[1] = glm::clamp((int)pow255(sample->g*f, p),0,255);
-            dest[2] = glm::clamp((int)pow255(sample->b*f, p),0,255);
+            dest[0] = sample->r * m;
+            dest[1] = sample->g * m;
+            dest[2] = sample->b * m;
             
-            dest+=3;
+            dest += 3;
             sample++;
         }
         
-        dest += (BLOCK_SIZE-lightmapW) * 3;
+        dest += (BLOCK_SIZE - lightmapW) * 3;
     }
 }
 
@@ -342,14 +335,14 @@ bool LM_AllocBlock(int w, int h, int *x, int *y)
     return true;
 }
 
-#include <format>
+//#include <format>
 
 void LM_UploadBlock()
 {
-    printf("Upload lightmap block %d\n", current_lightmap_texture);
+    printf("Upload lightmap block %d\n", current_lightmap_page);
     
-    std::string filename = std::format("lightmap_{}.png", current_lightmap_texture);
-    stbi_write_png(filename.c_str(), BLOCK_SIZE, BLOCK_SIZE, 3, lightmap_buffer, BLOCK_SIZE * 3);
+//    std::string filename = std::format("lightmap_{}.png", current_lightmap_texture);
+//    stbi_write_png(filename.c_str(), BLOCK_SIZE, BLOCK_SIZE, 3, lightmap_buffer, BLOCK_SIZE * 3);
     
     GLuint id;
     glGenTextures(1, &id);
@@ -360,11 +353,11 @@ void LM_UploadBlock()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BLOCK_SIZE, BLOCK_SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, lightmap_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BLOCK_SIZE, BLOCK_SIZE, 0, GL_RGB, GL_FLOAT, lightmap_buffer);
     glGenerateMipmap(GL_TEXTURE_2D);
     
     glBindTexture(GL_TEXTURE_2D, 0);
     
-    g_lightmaps[current_lightmap_texture] = id;
-    current_lightmap_texture++;
+    g_lightmaps[current_lightmap_page] = id;
+    current_lightmap_page++;
 }
