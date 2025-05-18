@@ -12,6 +12,7 @@
 #include "StudioRenderer.h"
 
 #include "Input.h"
+#include "Application.h"
 
 static const float kMouseSense = 0.15;
 
@@ -86,8 +87,17 @@ PlayerDebug::PlayerDebug()
 
 void PlayerDebug::update(float dt)
 {
-    yaw -= Input::getMouseOffsetX() * kMouseSense * dt;
-    pitch += Input::getMouseOffsetY() * kMouseSense * dt;
+    if (Input::isLeftMouseButtonPressed())
+    {
+        Application::setCursorEnabled(false);
+        
+        yaw -= Input::getMouseOffsetX() * kMouseSense * dt;
+        pitch += Input::getMouseOffsetY() * kMouseSense * dt;
+    }
+    else
+    {
+        Application::setCursorEnabled(true);
+    }
     
     if (pitch > 1.5) pitch = 1.5;
     else if (pitch < -1.5) pitch = -1.5;
@@ -109,6 +119,7 @@ void PlayerDebug::update(float dt)
     
     float forwardmove = 0;
     float rightmove = 0;
+    float upmove = 0;
     
     if (Input::isKeyPressed(KEY_W))
     {
@@ -130,7 +141,17 @@ void PlayerDebug::update(float dt)
         rightmove -= 1;
     }
     
-    bool jump = Input::isKeyPressed(KEY_SPACE);
+    if (Input::isKeyPressed(KEY_SPACE))
+    {
+        upmove += 1;
+    }
+    
+    if (Input::isKeyPressed(GLFW_KEY_C))
+    {
+        upmove -= 1;
+    }
+    
+//    bool jump = Input::isKeyPressed(KEY_SPACE);
     
     static float cl_forwardspeed = 400.0;
     static float cl_sidespeed = 350.0;
@@ -138,6 +159,7 @@ void PlayerDebug::update(float dt)
     glm::vec3 direction = {0, 0, 0};
     direction += forward * forwardmove * cl_forwardspeed;
     direction += right * rightmove * cl_forwardspeed;
+    direction += up * upmove * cl_forwardspeed;
     
     position += direction * dt;
 }

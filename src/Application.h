@@ -14,6 +14,8 @@ struct Application
     
     void run();
     
+    static void setCursorEnabled(bool state);
+    
 private:
     struct GLFWwindow* m_pWindow;
     
@@ -21,4 +23,6 @@ private:
     class SourceMapScene* m_pScene;
     
     void updateInputState();
+    
+    static Application* currentInstance;
 };

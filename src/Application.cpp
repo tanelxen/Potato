@@ -29,6 +29,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
+Application* Application::currentInstance = nullptr;
+
 Application::Application()
 {
     /* GLFW */
@@ -73,6 +75,8 @@ Application::Application()
     
     glfwSwapInterval(0);
     glFrontFace(GL_CCW);
+    
+    currentInstance = this;
 }
 
 Application::~Application()
@@ -92,7 +96,7 @@ void Application::run()
     double lastTime = 0;
     const double desiredFrameTime = 1.0 / 60;
     
-    glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//    glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     glEnable(GL_FRAMEBUFFER_SRGB);
     
@@ -167,4 +171,12 @@ void Application::updateInputState()
     Input::getInstance().m_mouseY = mouseY;
     
     isFirstFrame = false;
+}
+
+void Application::setCursorEnabled(bool state)
+{
+    if(currentInstance)
+    {
+        glfwSetInputMode(currentInstance->m_pWindow, GLFW_CURSOR, state ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    }
 }
