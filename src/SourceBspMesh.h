@@ -41,6 +41,8 @@ private:
     std::vector<mvert_t> verts;
     std::vector<unsigned int> indices;
     
+    std::vector<mface_t> disp_faces;
+    
     unsigned int vao;
     unsigned int vbo;
     unsigned int ibo;
@@ -51,4 +53,7 @@ private:
     
     void initBuffers();
     void generateTextures();
+    
+    void processRegularFace(struct dface_t &bspFace, SourceBSPAsset *bsp);
+    void processDisplacementFace(struct dface_t &bspFace, SourceBSPAsset *bsp);
 };

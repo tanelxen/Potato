@@ -128,3 +128,49 @@ struct ColorRGBExp32
     byte r, g, b;
     signed char exponent;
 };
+
+
+//struct CDispSubNeighbor
+//{
+//    unsigned char           m_NeighborOrientation;
+//    unsigned char           m_Span;
+//    unsigned char           m_NeighborSpan;
+//};
+//
+//class CDispNeighbor
+//{
+//    CDispSubNeighbor        m_SubNeighbors[2];
+//};
+//
+//#define MAX_DISP_CORNER_NEIGHBORS  4
+//
+//class CDispCornerNeighbors
+//{
+//    unsigned short  m_Neighbors[MAX_DISP_CORNER_NEIGHBORS]; // indices of neighbors.
+//    unsigned char   m_nNeighbors;
+//};
+
+struct dispinfo_t
+{
+    glm::vec3        startPosition;        // start position used for orientation
+    int            DispVertStart;        // Index into LUMP_DISP_VERTS.
+    int            DispTriStart;        // Index into LUMP_DISP_TRIS.
+    int            power;            // power - indicates size of surface (2^power    1)
+    int            minTess;        // minimum tesselation allowed
+    float        smoothingAngle;        // lighting smoothing angle
+    int            contents;        // surface contents
+    unsigned short        MapFace;        // Which map face this displacement comes from.
+    int            LightmapAlphaStart;    // Index into ddisplightmapalpha.
+    int            LightmapSamplePositionStart;    // Index into LUMP_DISP_LIGHTMAP_SAMPLE_POSITIONS.
+//    CDispNeighbor        EdgeNeighbors[4];    // Indexed by NEIGHBOREDGE_ defines.
+//    CDispCornerNeighbors    CornerNeighbors[4];    // Indexed by CORNER_ defines.
+    char neighbor_data[86];
+    unsigned int        AllowedVerts[10];    // active verticies
+};
+
+struct dispvert_t
+{
+    glm::vec3 pos;
+    float distance;
+    float alpha;
+};

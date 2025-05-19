@@ -206,6 +206,20 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
 //        file.write(pakData.data(), pakLength);
 //    }
     
+    {
+        int count = lumps[LUMP_DISPINFO].filelen / sizeof(dispinfo_t);
+        m_displacements.resize(count);
+        fseek(fp, lumps[LUMP_DISPINFO].fileofs, SEEK_SET);
+        fread(m_displacements.data(), count, sizeof(dispinfo_t), fp);
+    }
+    
+    {
+        int count = lumps[LUMP_DISP_VERTS].filelen / sizeof(dispvert_t);
+        m_disp_verts.resize(count);
+        fseek(fp, lumps[LUMP_DISP_VERTS].fileofs, SEEK_SET);
+        fread(m_disp_verts.data(), count, sizeof(dispvert_t), fp);
+    }
+    
     fclose(fp);
     return (fp);
 }

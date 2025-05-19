@@ -19,6 +19,7 @@
 
 static SourceBSPAsset* g_bsp = nullptr;
 static Shader shader;
+static Shader shader_disp;
 
 unsigned int loadTexture(std::string filename);
 
@@ -44,96 +45,13 @@ void SourceBspMesh::initFromBsp(SourceBSPAsset *bsp)
     
     for (auto& bspFace : bsp->m_faces)
     {
-        if (bspFace.dispinfo != -1) continue;
-        
-        auto& texinfo = bsp->m_texinfos[bspFace.texinfo];
-        
-        auto& texture_name = bsp->m_materials[texinfo.texdata].name;
-        if (texture_name == "tools/toolstrigger") continue;
-        
-        mface_t& face = faces.emplace_back();
-        
-        face.firstVert = indices.size();
-        face.numVerts = 0;
-        
-        face.material = texinfo.texdata;
-        
-        auto& reflect = bsp->m_materials[texinfo.texdata].reflecivity;
-        glm::vec3 color = glm::vec3(sqrt(reflect.x), sqrt(reflect.y), sqrt(reflect.z));
-        
-        int textureWidth = bsp->m_materials[texinfo.texdata].width;
-        int textureHeight = bsp->m_materials[texinfo.texdata].height;
-        
-        int lightmapWidth = bspFace.LightmapTextureSizeInLuxels[0] + 1;
-        int lightmapHeight = bspFace.LightmapTextureSizeInLuxels[1] + 1;
-        int lightmapX = 0;
-        int lightmapY = 0;
-        
-        if (bspFace.lightofs != -1)
+        if (bspFace.dispinfo != -1)
         {
-            if(!LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY))
-            {
-                LM_UploadBlock();
-                LM_InitBlock();
-                
-                LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY);
-            }
-            
-            ColorRGBExp32 *samples = bsp->m_lightmap.data();
-            float *dest = lightmap_buffer + (lightmapY * BLOCK_SIZE + lightmapX) * 3;
-            CreateLightmapTex(samples, dest, &bspFace);
-            
-            face.lightmap = current_lightmap_page;
+            processDisplacementFace(bspFace, bsp);
         }
-        
-        auto& plane = bsp->m_planes[bspFace.planenum];
-        
-        std::vector<mvert_t> faceVerts;
-        
-        for (int i = 0; i < bspFace.numedges; ++i)
+        else
         {
-            int surfEdge = bsp->m_surfedges[bspFace.firstedge + i];
-            int edgeIndex = abs(surfEdge);
-            
-            auto& edge = bsp->m_edges[edgeIndex];
-            
-            auto& pos = bsp->m_verts[edge.v[(surfEdge < 0) ? 1 : 0]];
-            
-            glm::vec2 texUV;
-            texUV.x = (glm::dot(pos, texinfo.textureVecS) + texinfo.textureOffsetS) / textureWidth;
-            texUV.y = (glm::dot(pos, texinfo.textureVecT) + texinfo.textureOffsetT) / textureHeight;
-            
-            glm::vec2 lightmapUV;
-            
-            if (bspFace.lightofs != -1)
-            {
-                float offsetS = texinfo.lightmapSOffset - bspFace.LightmapTextureMinsInLuxels[0] + lightmapX;
-                float offsetT = texinfo.lightmapTOffset - bspFace.LightmapTextureMinsInLuxels[1] + lightmapY;
-                
-                lightmapUV.x = (glm::dot(pos, texinfo.lightmapSVec) + offsetS + 0.5f) / BLOCK_SIZE;
-                lightmapUV.y = (glm::dot(pos, texinfo.lightmapTVec) + offsetT + 0.5f) / BLOCK_SIZE;
-            }
-            
-            mvert_t vert;
-            vert.pos = pos;
-            vert.clr = color;
-            vert.nrm = plane.normal;
-            vert.uv1 = texUV;
-            vert.uv2 = lightmapUV;
-            
-            faceVerts.push_back(vert);
-        }
-        
-        uint32_t baseIndex = verts.size();
-        verts.insert(verts.end(), faceVerts.begin(), faceVerts.end());
-        
-        for (int i = 2; i < faceVerts.size(); ++i)
-        {
-            indices.push_back(baseIndex);
-            indices.push_back(baseIndex + i - 1);
-            indices.push_back(baseIndex + i);
-            
-            face.numVerts += 3;
+            processRegularFace(bspFace, bsp);
         }
     }
     
@@ -154,9 +72,6 @@ void SourceBspMesh::renderFaces(glm::mat4x4 &mvp)
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, missing_id);
-    
     for (auto& face : faces)
     {
         glActiveTexture(GL_TEXTURE0);
@@ -166,6 +81,21 @@ void SourceBspMesh::renderFaces(glm::mat4x4 &mvp)
         glBindTexture(GL_TEXTURE_2D, g_lightmaps[face.lightmap]);
         
         glDrawElements(GL_TRIANGLES, face.numVerts, GL_UNSIGNED_INT, (void *)(face.firstVert * sizeof(uint32_t)));
+    }
+    
+    shader_disp.bind();
+    shader_disp.setUniform("MVP", mvp);
+    
+    for (auto& face : disp_faces)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_textures[face.material]);
+        
+//        glActiveTexture(GL_TEXTURE1);
+//        glBindTexture(GL_TEXTURE_2D, g_lightmaps[face.lightmap]);
+        
+        glDrawArrays(GL_TRIANGLES, face.firstVert, face.numVerts);
+//        glDrawElements(GL_TRIANGLES, face.numVerts, GL_UNSIGNED_INT, (void *)(face.firstVert * sizeof(uint32_t)));
     }
 }
 
@@ -211,6 +141,12 @@ void SourceBspMesh::initBuffers()
     glUniform1i(glGetUniformLocation(shader.program, "s_bspTexture"), 0);
     glUniform1i(glGetUniformLocation(shader.program, "s_bspLightmap"), 1);
     shader.unbind();
+    
+    shader_disp.init("assets/shaders/vbsp_disp.glsl");
+    shader_disp.bind();
+    glUniform1i(glGetUniformLocation(shader_disp.program, "s_bspTexture"), 0);
+    glUniform1i(glGetUniformLocation(shader_disp.program, "s_bspLightmap"), 1);
+    shader_disp.unbind();
 }
 
 void SourceBspMesh::generateTextures()
@@ -258,6 +194,274 @@ void SourceBspMesh::generateTextures()
     }
 }
 
+void SourceBspMesh::processRegularFace(dface_t &bspFace, SourceBSPAsset *bsp)
+{
+    auto& texinfo = bsp->m_texinfos[bspFace.texinfo];
+    
+    auto& texture_name = bsp->m_materials[texinfo.texdata].name;
+    if (texture_name == "tools/toolstrigger") return;
+    
+    mface_t& face = faces.emplace_back();
+    
+    face.firstVert = indices.size();
+    face.numVerts = 0;
+    
+    face.material = texinfo.texdata;
+    
+    auto& reflect = bsp->m_materials[texinfo.texdata].reflecivity;
+    glm::vec3 color = glm::vec3(sqrt(reflect.x), sqrt(reflect.y), sqrt(reflect.z));
+    
+    int textureWidth = bsp->m_materials[texinfo.texdata].width;
+    int textureHeight = bsp->m_materials[texinfo.texdata].height;
+    
+    int lightmapWidth = bspFace.LightmapTextureSizeInLuxels[0] + 1;
+    int lightmapHeight = bspFace.LightmapTextureSizeInLuxels[1] + 1;
+    int lightmapX = 0;
+    int lightmapY = 0;
+    
+    if (bspFace.lightofs != -1)
+    {
+        if(!LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY))
+        {
+            LM_UploadBlock();
+            LM_InitBlock();
+            
+            LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY);
+        }
+        
+        ColorRGBExp32 *samples = bsp->m_lightmap.data();
+        float *dest = lightmap_buffer + (lightmapY * BLOCK_SIZE + lightmapX) * 3;
+        CreateLightmapTex(samples, dest, &bspFace);
+        
+        face.lightmap = current_lightmap_page;
+    }
+    
+    auto& plane = bsp->m_planes[bspFace.planenum];
+    
+    std::vector<mvert_t> faceVerts;
+    
+    for (int i = 0; i < bspFace.numedges; ++i)
+    {
+        int surfEdge = bsp->m_surfedges[bspFace.firstedge + i];
+        int edgeIndex = abs(surfEdge);
+        
+        auto& edge = bsp->m_edges[edgeIndex];
+        
+        auto& pos = bsp->m_verts[edge.v[(surfEdge < 0) ? 1 : 0]];
+        
+        glm::vec2 texUV;
+        texUV.x = (glm::dot(pos, texinfo.textureVecS) + texinfo.textureOffsetS) / textureWidth;
+        texUV.y = (glm::dot(pos, texinfo.textureVecT) + texinfo.textureOffsetT) / textureHeight;
+        
+        glm::vec2 lightmapUV;
+        
+        if (bspFace.lightofs != -1)
+        {
+            float offsetS = texinfo.lightmapSOffset - bspFace.LightmapTextureMinsInLuxels[0] + lightmapX;
+            float offsetT = texinfo.lightmapTOffset - bspFace.LightmapTextureMinsInLuxels[1] + lightmapY;
+            
+            lightmapUV.x = (glm::dot(pos, texinfo.lightmapSVec) + offsetS + 0.5f) / BLOCK_SIZE;
+            lightmapUV.y = (glm::dot(pos, texinfo.lightmapTVec) + offsetT + 0.5f) / BLOCK_SIZE;
+        }
+        
+        mvert_t vert;
+        vert.pos = pos;
+        vert.clr = color;
+        vert.nrm = plane.normal;
+        vert.uv1 = texUV;
+        vert.uv2 = lightmapUV;
+        
+        faceVerts.push_back(vert);
+    }
+    
+    uint32_t baseIndex = verts.size();
+    verts.insert(verts.end(), faceVerts.begin(), faceVerts.end());
+    
+    for (int i = 2; i < faceVerts.size(); ++i)
+    {
+        indices.push_back(baseIndex);
+        indices.push_back(baseIndex + i - 1);
+        indices.push_back(baseIndex + i);
+        
+        face.numVerts += 3;
+    }
+}
+
+glm::vec3 findNormal(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
+
+void SourceBspMesh::processDisplacementFace(struct dface_t &bspFace, SourceBSPAsset *bsp)
+{
+    glm::vec3 low_base = bsp->m_displacements[bspFace.dispinfo].startPosition;
+    
+    if (bspFace.numedges != 4) {
+        printf("Bad displacement!\n");
+        return;
+    }
+    
+    glm::vec3 corner_verts[4];
+    int base_i = -1;
+    float base_dist = INFINITY;
+    
+    for (int k = 0; k < 4; k++)
+    {
+        int surfEdge = bsp->m_surfedges[bspFace.firstedge + k];
+        int edgeIndex = abs(surfEdge);
+        
+        auto& edge = bsp->m_edges[edgeIndex];
+        
+        auto& pos = bsp->m_verts[edge.v[(surfEdge < 0) ? 1 : 0]];
+        
+        float this_dist = std::abs(pos.x - low_base.x) + std::abs(pos.y - low_base.y) + std::abs(pos.z - low_base.z);
+        
+        if (this_dist < base_dist)
+        {
+            base_dist = this_dist;
+            base_i = k;
+        }
+        
+        corner_verts[k] = pos;
+    }
+    
+    if (base_i == -1) {
+        printf("Bad base in displacement!\n");
+        return;
+    }
+    
+    auto& texinfo = bsp->m_texinfos[bspFace.texinfo];
+    int textureWidth = bsp->m_materials[texinfo.texdata].width;
+    int textureHeight = bsp->m_materials[texinfo.texdata].height;
+    
+    auto& reflect = bsp->m_materials[texinfo.texdata].reflecivity;
+    glm::vec3 color = glm::vec3(sqrt(reflect.x), sqrt(reflect.y), sqrt(reflect.z));
+    
+    int lightmapWidth = bspFace.LightmapTextureSizeInLuxels[0] + 1;
+    int lightmapHeight = bspFace.LightmapTextureSizeInLuxels[1] + 1;
+    int lightmapX = 0;
+    int lightmapY = 0;
+    int lightmapPage = -1;
+    
+//    if (bspFace.lightofs != -1)
+//    {
+//        if(!LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY))
+//        {
+//            LM_UploadBlock();
+//            LM_InitBlock();
+//            
+//            LM_AllocBlock(lightmapWidth, lightmapHeight, &lightmapX, &lightmapY);
+//        }
+//        
+//        ColorRGBExp32 *samples = bsp->m_lightmap.data();
+//        float *dest = lightmap_buffer + (lightmapY * BLOCK_SIZE + lightmapX) * 3;
+//        CreateLightmapTex(samples, dest, &bspFace);
+//        
+//        lightmapPage = current_lightmap_page;
+//    }
+    
+    glm::vec3 high_base = corner_verts[ (base_i + 3) % 4 ];
+    glm::vec3 high_ray = corner_verts[ (base_i + 2) % 4 ] - high_base;
+    glm::vec3 low_ray = corner_verts[ (base_i + 1) % 4 ] - low_base;
+    
+    int verts_wide = (2 << (bsp->m_displacements[bspFace.dispinfo].power - 1)) + 1;
+    
+    glm::vec3 base_verts_pos[289];
+    glm::vec2 base_verts_uv1[289];
+//    glm::vec2 base_verts_uv2[289];
+    glm::vec3 base_verts_clr[289];
+//    float base_alphas[289];
+    
+    int base_dispvert_index = bsp->m_displacements[bspFace.dispinfo].DispVertStart;
+    
+    for (int y = 0; y < verts_wide; y++)
+    {
+        float fy = (float)y / (verts_wide - 1);
+        
+        glm::vec3 mid_base = low_base + low_ray * fy;
+        glm::vec3 mid_ray = high_base + high_ray * fy - mid_base;
+        
+        for (int x = 0; x < verts_wide; x++)
+        {
+            float fx = (float)x / (verts_wide - 1);
+            int i = x + y * verts_wide;
+            
+            glm::vec3 offset = bsp->m_disp_verts[base_dispvert_index + i].pos;
+            float scale = bsp->m_disp_verts[base_dispvert_index + i].distance;
+            float alpha = bsp->m_disp_verts[base_dispvert_index + i].alpha / 255;
+            
+            base_verts_pos[i] = mid_base + mid_ray * fx + offset*scale;
+            
+            base_verts_uv1[i].x = (glm::dot(base_verts_pos[i], texinfo.textureVecS) + texinfo.textureOffsetS) / textureWidth;
+            base_verts_uv1[i].y = (glm::dot(base_verts_pos[i], texinfo.textureVecT) + texinfo.textureOffsetT) / textureHeight;
+            
+//            if (bspFace.lightofs != -1)
+//            {
+//                float offsetS = texinfo.lightmapSOffset - bspFace.LightmapTextureMinsInLuxels[0] + lightmapX;
+//                float offsetT = texinfo.lightmapTOffset - bspFace.LightmapTextureMinsInLuxels[1] + lightmapY;
+//                
+//                base_verts_uv2[i].x = (glm::dot(base_verts_pos[i], texinfo.lightmapSVec) + offsetS + 0.5f) / BLOCK_SIZE;
+//                base_verts_uv2[i].y = (glm::dot(base_verts_pos[i], texinfo.lightmapTVec) + offsetT + 0.5f) / BLOCK_SIZE;
+//            }
+            
+            base_verts_clr[i] = glm::mix(color, {1, 0, 1}, alpha);
+        }
+    }
+    
+    std::vector<mvert_t> faceVerts;
+    
+    for (int y = 0; y < verts_wide - 1; y++)
+    {
+        for (int x = 0; x < verts_wide - 1; x++)
+        {
+            int i = x + y * verts_wide;
+            
+            mvert_t vert1, vert2, vert3, vert4;
+            
+            vert1.pos = base_verts_pos[i];
+            vert2.pos = base_verts_pos[i + 1];
+            vert3.pos = base_verts_pos[i + verts_wide];
+            vert4.pos = base_verts_pos[i + verts_wide + 1];
+            
+            vert1.uv1 = base_verts_uv1[i];
+            vert2.uv1 = base_verts_uv1[i + 1];
+            vert3.uv1 = base_verts_uv1[i + verts_wide];
+            vert4.uv1 = base_verts_uv1[i + verts_wide + 1];
+            
+            vert1.clr = base_verts_clr[i];
+            vert2.clr = base_verts_clr[i + 1];
+            vert3.clr = base_verts_clr[i + verts_wide];
+            vert4.clr = base_verts_clr[i + verts_wide + 1];
+            
+            if (i % 2)
+            {
+                faceVerts.push_back(vert1);
+                faceVerts.push_back(vert3);
+                faceVerts.push_back(vert2);
+                
+                faceVerts.push_back(vert2);
+                faceVerts.push_back(vert3);
+                faceVerts.push_back(vert4);
+            }
+            else
+            {
+                faceVerts.push_back(vert1);
+                faceVerts.push_back(vert3);
+                faceVerts.push_back(vert4);
+                
+                faceVerts.push_back(vert2);
+                faceVerts.push_back(vert1);
+                faceVerts.push_back(vert4);
+            }
+        }
+    }
+    
+    mface_t& face = disp_faces.emplace_back();
+    
+    face.material = texinfo.texdata;
+    face.firstVert = verts.size();
+    face.numVerts = faceVerts.size();
+    face.lightmap = lightmapPage;
+    
+    verts.insert(verts.end(), faceVerts.begin(), faceVerts.end());
+}
 
 
 void CreateLightmapTex(ColorRGBExp32 *samples, float *dest, dface_t *face)
@@ -360,4 +564,22 @@ void LM_UploadBlock()
     
     g_lightmaps[current_lightmap_page] = id;
     current_lightmap_page++;
+}
+
+glm::vec3 findNormal(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
+{
+    glm::vec3 u = b - c;
+    glm::vec3 v = a - c;
+    
+    glm::vec3 norm;
+    norm.x = u.y*v.z - u.z*v.y;
+    norm.y = u.z*v.x - u.x*v.z;
+    norm.z = u.x*v.y - u.y*v.x;
+    
+    float len = sqrt(norm.x*norm.x + norm.y*norm.y + norm.z*norm.z);
+    norm.x /= len;
+    norm.y /= len;
+    norm.z /= len;
+    
+    return norm;
 }

@@ -27,7 +27,7 @@ SourceMapScene::SourceMapScene(Camera *camera) : m_pCamera(camera)
 {
     studio = std::make_unique<StudioRenderer>();
     
-    loadMap("assets/hl2/maps/d1_trainstation_02.bsp");
+    loadMap("assets/hl2/maps/d1_canals_01a.bsp");
 }
 
 SourceMapScene::~SourceMapScene() = default;

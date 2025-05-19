@@ -29,11 +29,11 @@ unsigned int loadTexture(std::string filename)
     
     if(fp == nullptr)
     {
-//        printf("unable to open %s\n", filename.c_str());
+        printf("unable to open %s\n", filename.c_str());
         return 0;
     }
     
-    printf("Read %s\n", filename.c_str());
+//    printf("Read %s\n", filename.c_str());
     
     VTFFileHeader_t header;
     fread(&header, 1, sizeof(VTFFileHeader_t), fp);

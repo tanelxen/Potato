@@ -37,6 +37,9 @@ struct SourceBSPAsset
     
     std::vector<dface_t> m_faces;
     
+    std::vector<dispinfo_t> m_displacements;
+    std::vector<dispvert_t> m_disp_verts;
+    
     std::vector<dtexinfo_t> m_texinfos;
     
     std::vector<dplane_t> m_planes;
