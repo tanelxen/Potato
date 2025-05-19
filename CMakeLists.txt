@@ -92,16 +92,19 @@ set(SRC_MINIAUDIO
         src/verblib.h
 )
 
+set(SRC_IMGUI
+        vendor/imgui/backends/imgui_impl_glfw.cpp
+        vendor/imgui/backends/imgui_impl_opengl3.cpp
+#src/imguiStyling.cpp
+)
+
 add_executable( ${PROJECT_NAME}
         ${SRC_COMMON}
         ${SRC_Q3}
         ${SRC_GLDSRC}
         ${SRC_SOURCE}
         ${SRC_MINIAUDIO}
-
-        #vendor/imgui/backends/imgui_impl_glfw.cpp
-        #vendor/imgui/backends/imgui_impl_opengl3.cpp
-        #src/imguiStyling.cpp
+        ${SRC_IMGUI}
 )
 
 source_group("Common" FILES ${SRC_COMMON})
@@ -109,6 +112,7 @@ source_group("Quake 3" FILES ${SRC_Q3})
 source_group("GoldSrc" FILES ${SRC_GLDSRC})
 source_group("Source" FILES ${SRC_SOURCE})
 source_group("miniaudio" FILES ${SRC_MINIAUDIO})
+source_group("imgui" FILES ${SRC_IMGUI})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLM_FORCE_XYZW_ONLY)
 

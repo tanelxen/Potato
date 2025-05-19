@@ -11,15 +11,19 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 //#include "Q3MapScene.h"
+#include "SourceMapScene.h"
+
 #include "Camera.h"
 
 #include "Input.h"
 #include "HUD.h"
 
 #include "Application.h"
-
-#include "SourceMapScene.h"
 
 static void error_callback(int e, const char *d) { printf("Error %d: %s\n", e, d); }
 
@@ -30,6 +34,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 Application* Application::currentInstance = nullptr;
+
+void imgui_init(GLFWwindow* window);
+void imgui_draw();
 
 Application::Application()
 {
@@ -69,6 +76,8 @@ Application::Application()
     
     const unsigned char* device = glGetString(GL_RENDERER);
     printf("device: %s\n", device);
+    
+    imgui_init(m_pWindow);
     
     m_pCamera = new Camera();
     m_pScene = new SourceMapScene(m_pCamera);
@@ -126,12 +135,17 @@ void Application::run()
         
         hud.resize(width, height);
         hud.draw();
+        
+        imgui_draw();
 
         glfwSwapBuffers(m_pWindow);
         
         glfwPollEvents();
         updateInputState();
     }
+    
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
 }
 
 
@@ -179,4 +193,36 @@ void Application::setCursorEnabled(bool state)
     {
         glfwSetInputMode(currentInstance->m_pWindow, GLFW_CURSOR, state ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     }
+}
+
+void imgui_init(GLFWwindow* window)
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 150");
+    
+    //    setImGuiStyle();
+}
+
+void imgui_draw()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    
+    {
+        static float f = 0.0f;
+        ImGui::Text("Hello, world!");
+        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+//        ImGui::ColorEdit3("clear color", (float*)&clear_color);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    }
+    
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
