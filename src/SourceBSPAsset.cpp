@@ -89,6 +89,10 @@ enum LumpTypes
     LUMP_OVERLAY_FADES = 60,             // Fade distances for overlays
 };
 
+#define MAKE_MAGIC(a, b, c, d) ((int)(a) | ((int)(b) << 8) | ((int)(c) << 16) | ((int)(d) << 24))
+#define PRPS_MAGIC MAKE_MAGIC('p', 'r', 'p', 's')
+#define PRPD_MAGIC MAKE_MAGIC('p', 'r', 'p', 'd')
+
 std::string extractBaseTexture(const std::string& materialName);
 
 bool SourceBSPAsset::initFromFile(const std::string &filename)
@@ -218,6 +222,62 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
         m_disp_verts.resize(count);
         fseek(fp, lumps[LUMP_DISP_VERTS].fileofs, SEEK_SET);
         fread(m_disp_verts.data(), count, sizeof(dispvert_t), fp);
+    }
+    
+    {
+        uint32_t lumpCount;
+        fseek(fp, lumps[LUMP_GAME_LUMP].fileofs, SEEK_SET);
+        fread(&lumpCount, 1, sizeof(uint32_t), fp);
+        
+        std::vector<dgamelump_t> gamelumps(lumpCount);
+        fread(gamelumps.data(), lumpCount, sizeof(dgamelump_t), fp);
+        
+        for (auto& lump : gamelumps)
+        {
+            if (lump.id == PRPS_MAGIC)
+            {
+                uint32_t staticModelDictCount = 0;
+                
+                fseek(fp, lump.fileofs, SEEK_SET);
+                fread(&staticModelDictCount, 1, sizeof(uint32_t), fp);
+                
+                m_staticModelDict.resize(staticModelDictCount);
+                
+                for (int i = 0; i < staticModelDictCount; ++i)
+                {
+                    char str[128];
+                    fread(str, 1, sizeof(str), fp);
+                    m_staticModelDict[i] = str;
+                }
+                
+                uint32_t leafListCount = 0;
+                fread(&leafListCount, 1, sizeof(uint32_t), fp);
+                
+                long offset = ftell(fp);
+                fseek(fp, offset + leafListCount * sizeof(uint16_t), SEEK_SET);
+                
+                uint32_t staticObjectCount = 0;
+                fread(&staticObjectCount, 1, sizeof(uint32_t), fp);
+                
+                m_staticProps.resize(staticObjectCount);
+                
+                offset = ftell(fp);
+                
+                for (int i = 0; i < staticObjectCount; ++i)
+                {
+                    auto& prop = m_staticProps[i];
+                    fseek(fp, offset, SEEK_SET);
+                    
+                    fread(&prop.origin, 1, sizeof(glm::vec3), fp);
+                    fread(&prop.angles, 1, sizeof(glm::vec3), fp);
+                    fread(&prop.modelIndex, 1, sizeof(uint16_t), fp);
+                    
+                    offset += 56;
+                    
+                    if (lump.version > 4) offset += 4;
+                }
+            }
+        }
     }
     
     fclose(fp);

@@ -22,6 +22,13 @@ struct dmaterial_t
 
 struct SourceBSPAsset
 {
+    struct StaticProp_t
+    {
+        glm::vec3 origin;
+        glm::vec3 angles;
+        uint16_t modelIndex;
+    };
+    
     bool initFromFile(const std::string& filename);
     
     std::string m_entities;
@@ -45,4 +52,7 @@ struct SourceBSPAsset
     std::vector<dplane_t> m_planes;
     
     std::vector<ColorRGBExp32> m_lightmap;
+    
+    std::vector<std::string> m_staticModelDict;
+    std::vector<StaticProp_t> m_staticProps;
 };

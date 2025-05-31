@@ -129,27 +129,6 @@ struct ColorRGBExp32
     signed char exponent;
 };
 
-
-//struct CDispSubNeighbor
-//{
-//    unsigned char           m_NeighborOrientation;
-//    unsigned char           m_Span;
-//    unsigned char           m_NeighborSpan;
-//};
-//
-//class CDispNeighbor
-//{
-//    CDispSubNeighbor        m_SubNeighbors[2];
-//};
-//
-//#define MAX_DISP_CORNER_NEIGHBORS  4
-//
-//class CDispCornerNeighbors
-//{
-//    unsigned short  m_Neighbors[MAX_DISP_CORNER_NEIGHBORS]; // indices of neighbors.
-//    unsigned char   m_nNeighbors;
-//};
-
 struct dispinfo_t
 {
     glm::vec3        startPosition;        // start position used for orientation
@@ -173,4 +152,13 @@ struct dispvert_t
     glm::vec3 pos;
     float distance;
     float alpha;
+};
+
+struct dgamelump_t
+{
+    int        id;        // gamelump ID
+    unsigned short    flags;        // flags
+    unsigned short    version;    // gamelump version
+    int        fileofs;    // offset to this gamelump
+    int        filelen;    // length
 };
