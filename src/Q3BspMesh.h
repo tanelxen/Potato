@@ -19,12 +19,12 @@ struct Surface
     unsigned int numVerts;
 };
 
-class Quake3BSP;
+class Q3BSPAsset;
 
 class Q3BspMesh
 {
 public:
-    void initFromBsp(Quake3BSP* bsp);
+    void initFromBsp(Q3BSPAsset* bsp);
     void renderFaces(glm::mat4x4& mvp);
     
 private:

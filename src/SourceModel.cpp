@@ -18,8 +18,6 @@ unsigned int loadTexture(std::string filename);
 
 SourceModel::~SourceModel()
 {
-    printf("Delete %s\n", name.c_str());
-    
     glDeleteTextures(m_textureIds.size(), m_textureIds.data());
     glDeleteVertexArrays(1, &m_vao);
     glDeleteBuffers(1, &m_vbo);

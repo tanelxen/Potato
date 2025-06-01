@@ -10,7 +10,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 
-class Quake3BSP;
+class Q3BSPAsset;
 
 struct HitResult
 {
@@ -31,7 +31,7 @@ public:
     Q3BspCollision();
     ~Q3BspCollision();
     
-    void initFromBsp(Quake3BSP* bsp);
+    void initFromBsp(Q3BSPAsset* bsp);
     
     void trace(HitResult& result, const glm::vec3 &start, const glm::vec3 &end, const glm::vec3 &mins, const glm::vec3 &maxs) const;
     

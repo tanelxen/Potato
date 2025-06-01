@@ -12,7 +12,7 @@
 
 struct Q3LightGrid
 {
-    void init(const struct Quake3BSP& q3bsp);
+    void init(const struct Q3BSPAsset& q3bsp);
     
     void getValue(const glm::vec3& pos, glm::vec3& ambient, glm::vec3& color, glm::vec3& dir) const;
     

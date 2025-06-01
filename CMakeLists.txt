@@ -49,9 +49,9 @@ set(SRC_COMMON
 )
 
 set(SRC_Q3
-        src/Quake3Bsp.cpp
-        src/Quake3Bsp.h
-        src/Quake3Types.h
+        src/Q3BSPAsset.cpp
+        src/Q3BSPAsset.h
+        src/Q3BSPTypes.h
         src/Q3BspMesh.cpp
         src/Q3BspMesh.h
         src/Q3MapScene.cpp

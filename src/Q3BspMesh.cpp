@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "Q3BspMesh.h"
-#include "Quake3Bsp.h"
+#include "Q3BSPAsset.h"
 #include "Camera.h"
 #include "Shader.h"
 #include "TextureAtlas.h"
@@ -29,16 +29,16 @@
 #define FACE_MESH 3
 #define FACE_FX 4
 
-static Quake3BSP* g_bsp = nullptr;
+static Q3BSPAsset* g_bsp = nullptr;
 static Shader lm_shader;
 static Shader vl_shader;
 
-static void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas);
+static void adjastLightmapCoords(Q3BSPAsset* bsp, const TextureAtlas& atlas);
 static GLuint generateLightmap(const TextureAtlas& atlas);
 
 static bool textures_alpha[MAX_TEXTURES];
 
-void Q3BspMesh::initFromBsp(Quake3BSP* bsp)
+void Q3BspMesh::initFromBsp(Q3BSPAsset* bsp)
 {
     g_bsp = bsp;
     
@@ -55,7 +55,7 @@ void Q3BspMesh::initFromBsp(Quake3BSP* bsp)
     g_bsp = nullptr;
 }
 
-void adjastLightmapCoords(Quake3BSP* bsp, const TextureAtlas& atlas)
+void adjastLightmapCoords(Q3BSPAsset* bsp, const TextureAtlas& atlas)
 {
     std::unordered_map<int, bool> processedVertices;
     

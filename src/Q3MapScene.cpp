@@ -8,7 +8,7 @@
 #include "Q3MapScene.h"
 
 #include "KeyValueCollection.h"
-#include "Quake3Bsp.h"
+#include "Q3BSPAsset.h"
 #include "Camera.h"
 #include "Player.h"
 #include "PlayerMovement.h"
@@ -133,7 +133,7 @@ Q3MapScene::~Q3MapScene() = default;
 
 void Q3MapScene::loadMap(const std::string &filename)
 {
-    Quake3BSP bsp;
+    Q3BSPAsset bsp;
 
     if (!bsp.initFromFile(filename.c_str())) {
         return;

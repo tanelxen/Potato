@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "Quake3Types.h"
+#include "Q3BSPTypes.h"
 #include <string>
 #include <vector>
 

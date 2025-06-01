@@ -6,7 +6,7 @@
 //
 
 #include "Q3BspCollision.h"
-#include "Quake3Bsp.h"
+#include "Q3BSPAsset.h"
 
 struct trace_work
 {
@@ -104,7 +104,7 @@ struct Q3BspCollision::Impl
 Q3BspCollision::Q3BspCollision() : pImpl(new Impl) {}
 Q3BspCollision::~Q3BspCollision() = default;
 
-void Q3BspCollision::initFromBsp(Quake3BSP *bsp)
+void Q3BspCollision::initFromBsp(Q3BSPAsset *bsp)
 {
 //    pImpl = std::make_unique<Impl>();
     

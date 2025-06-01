@@ -8,13 +8,13 @@
 #include <algorithm>
 
 #include "Q3LightGrid.h"
-#include "Quake3Bsp.h"
+#include "Q3BSPAsset.h"
 
 #define radians(deg) ((deg) * (M_PI / 180.0f))
 
 using std::min, std::max;
 
-void Q3LightGrid::init(const Quake3BSP& q3bsp)
+void Q3LightGrid::init(const Q3BSPAsset& q3bsp)
 {
     maxs = q3bsp.m_models[0].max;
     mins = q3bsp.m_models[0].min;

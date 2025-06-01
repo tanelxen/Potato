@@ -5,7 +5,7 @@
 //  Created by Fedor Artemenkov on 24.11.24.
 //
 
-#include "Quake3Types.h"
+#include "Q3BSPTypes.h"
 
 tBSPVertex mix(const tBSPVertex& x, const tBSPVertex& y, float t)
 {

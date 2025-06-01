@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "Quake3Bsp.h"
+#include "Q3BSPAsset.h"
 #include "Q3Bezier.h"
 
 // This is our lumps enumeration
@@ -25,7 +25,10 @@ enum eLumps {
     kMaxLumps      // A constant to store the number of lumps
 };
 
-bool Quake3BSP::initFromFile(const std::string& filename)
+#define MAKE_MAGIC(a, b, c, d) ((int)(a) | ((int)(b) << 8) | ((int)(c) << 16) | ((int)(d) << 24))
+#define IBSP_MAGIC MAKE_MAGIC('I', 'B', 'S', 'P')
+
+bool Q3BSPAsset::initFromFile(const std::string& filename)
 {
     FILE* fp = fopen(filename.c_str(), "rb" );
     
@@ -33,12 +36,15 @@ bool Quake3BSP::initFromFile(const std::string& filename)
         printf("unable to open %s\n", filename.c_str());
     }
 
-    // Initialize the header and lump structures
     tBSPHeader header;
-    tBSPLump lumps[kMaxLumps];
-
-    // Read in the header and lump data
     fread(&header, 1, sizeof(tBSPHeader), fp);
+    
+    if (header.magic != IBSP_MAGIC) {
+        printf("%s isn't IBSP\n", filename.c_str());
+        return false;
+    }
+    
+    tBSPLump lumps[kMaxLumps];
     fread(&lumps, kMaxLumps, sizeof(tBSPLump), fp);
     
     int numEntities = lumps[kEntities].length;

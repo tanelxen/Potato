@@ -3,9 +3,9 @@
 #include <vector>
 #include <string>
 
-#include "Quake3Types.h"
+#include "Q3BSPTypes.h"
 
-struct Quake3BSP
+struct Q3BSPAsset
 {
     bool initFromFile(const std::string& filename);
     
