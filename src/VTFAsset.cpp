@@ -103,14 +103,14 @@ unsigned int loadTexture(std::string filename)
 //        ifmt = GL_RGBA;
 //        fmt = GL_BGRA;
 //    }
-//    else if (header.imageFormat == IMAGE_FORMAT_BGR888)
-//    {
-//        texSize = width * height * 3;
-//        offset += computeMipsSize(width,height,header.numMipLevels-mip,3)*faces;
-//        ifmt = GL_RGB;
-//        fmt = FMT_BGR8;
-//        //need resample
-//    }
+    else if (header.imageFormat == IMAGE_FORMAT_BGR888)
+    {
+        texSize = width * height * 3;
+        offset += computeMipsSize(width,height,header.numMipLevels-mip,3)*faces;
+        ifmt = GL_RGB;
+        fmt = GL_BGR;
+        //need resample
+    }
     else
     {
         printf("Unknown format %i\n", header.imageFormat);

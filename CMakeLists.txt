@@ -83,6 +83,18 @@ set(SRC_SOURCE
         src/SourceMapScene.h
         src/VTFAsset.cpp
         src/VTFAsset.h
+        
+        src/VTXFile.cpp
+        src/VTXFile.h
+        src/VVDFile.cpp
+        src/VVDFile.h
+        src/MDLFile.cpp
+        src/MDLFile.h
+               
+        src/SourceMDLAsset.cpp
+        src/SourceMDLAsset.h
+        src/SourceModel.cpp
+        src/SourceModel.h
 )
 
 set(SRC_MINIAUDIO

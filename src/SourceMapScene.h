@@ -14,9 +14,6 @@
 #include "SourceBspMesh.h"
 
 class Camera;
-class PlayerDebug;
-
-struct StudioRenderer;
 
 class SourceMapScene
 {
@@ -31,8 +28,10 @@ public:
 private:
     Camera* m_pCamera;
     
-    std::unique_ptr<PlayerDebug> m_pPlayer;
-    std::unique_ptr<StudioRenderer> studio;
+    std::unique_ptr<class PlayerDebug> m_pPlayer;
+    
+    std::vector<struct StaticProp> m_staticProps;
+    std::vector<struct SourceModel> m_staticPropInstances;
     
     SourceBspMesh m_mesh;
 };
