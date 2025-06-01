@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(TryOpenGL)
+project(Potato)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
@@ -107,7 +107,7 @@ set(SRC_MINIAUDIO
 set(SRC_IMGUI
         vendor/imgui/backends/imgui_impl_glfw.cpp
         vendor/imgui/backends/imgui_impl_opengl3.cpp
-#src/imguiStyling.cpp
+        #src/imguiStyling.cpp
 )
 
 add_executable( ${PROJECT_NAME}
