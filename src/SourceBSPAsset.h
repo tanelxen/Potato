@@ -27,6 +27,13 @@ struct SourceBSPAsset
         glm::vec3 origin;
         glm::vec3 angles;
         uint16_t modelIndex;
+        uint16_t leafIndex;
+        uint16_t leafCount;
+    };
+    
+    struct LeafAmbientCube_t
+    {
+        ColorRGBExp32 color[6];
     };
     
     bool initFromFile(const std::string& filename);
@@ -55,4 +62,6 @@ struct SourceBSPAsset
     
     std::vector<std::string> m_staticModelDict;
     std::vector<StaticProp_t> m_staticProps;
+    
+    std::vector<LeafAmbientCube_t> m_leafAmbientCubes;
 };

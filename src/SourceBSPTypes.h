@@ -48,19 +48,28 @@ struct dnode_t
     short           padding;        // pad to 32 bytes length
 };
 
-struct dleaf_t
+struct ColorRGBExp32
 {
-    int                    contents;            // OR of all brushes (not needed?)
-    short                cluster;            // cluster this leaf is in
-    short                area : 9;            // area this leaf is in
-    short                flags : 7;            // flags
-    short                mins[ 3 ];            // for frustum culling
-    short                maxs[ 3 ];
-    unsigned short        firstleafface;        // index into leaffaces
-    unsigned short        numleaffaces;
-    unsigned short        firstleafbrush;        // index into leafbrushes
-    unsigned short        numleafbrushes;
-    short                leafWaterDataID;    // -1 for not in water
+    byte r, g, b;
+    signed char exponent;
+};
+
+struct dleaf_t_19
+{
+    int                contents;        // OR of all brushes (not needed?)
+    short            cluster;        // cluster this leaf is in
+    short            area:9;            // area this leaf is in
+    short            flags:7;        // flags
+    short            mins[3];        // for frustum culling
+    short            maxs[3];
+    unsigned short    firstleafface;    // index into leaffaces
+    unsigned short    numleaffaces;
+    unsigned short    firstleafbrush;    // index into leafbrushes
+    unsigned short    numleafbrushes;
+    short            leafWaterDataID;// -1 for not in water
+    
+    ColorRGBExp32    ambientLighting[6];    // Precaculated light info for entities.
+    short            padding;        // padding to 4-byte boundary
 };
 
 struct dface_t
@@ -121,12 +130,6 @@ struct dmodel_t
     glm::vec3    origin;            // for sounds or lights
     int32_t    headnode;        // index into node array
     int32_t    firstface, numfaces;    // index into face array
-};
-
-struct ColorRGBExp32
-{
-    byte r, g, b;
-    signed char exponent;
 };
 
 struct dispinfo_t

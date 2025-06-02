@@ -25,8 +25,8 @@ SourceModel::~SourceModel()
 }
 
 #define VERT_POSITION_LOC 0
-//#define VERT_NORMAL_LOC 1
-#define VERT_DIFFUSE_TEX_COORD_LOC 1
+#define VERT_NORMAL_LOC 1
+#define VERT_DIFFUSE_TEX_COORD_LOC 2
 //#define VERT_BONE_INDEX_LOC 3
 
 void SourceModel::init(const SourceMDLAsset& model)
@@ -70,6 +70,9 @@ void SourceModel::init(const SourceMDLAsset& model)
     
     glEnableVertexAttribArray(VERT_POSITION_LOC);
     glVertexAttribPointer(VERT_POSITION_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+    
+    glEnableVertexAttribArray(VERT_NORMAL_LOC);
+    glVertexAttribPointer(VERT_NORMAL_LOC, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
     
     glEnableVertexAttribArray(VERT_DIFFUSE_TEX_COORD_LOC);
     glVertexAttribPointer(VERT_DIFFUSE_TEX_COORD_LOC, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));

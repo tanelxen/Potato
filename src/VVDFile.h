@@ -24,6 +24,7 @@ struct VVDFile
     struct Vertex
     {
         vec3_t position;
+        vec3_t normal;
         vec2_t uv;
     };
     

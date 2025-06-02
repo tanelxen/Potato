@@ -30,6 +30,7 @@ void transformMatrix(glm::mat4x4 &dst, const glm::vec3 &angles, const glm::vec3 
 
 struct StaticProp
 {
+    std::vector<glm::vec3> ambient;
     glm::mat4x4 transform;
     uint16_t instance;
 };
@@ -39,7 +40,7 @@ SourceMapScene::SourceMapScene(Camera *camera) : m_pCamera(camera)
     mdl_shader.init("assets/shaders/source_mdl.glsl");
     glUniform1i(glGetUniformLocation(mdl_shader.program, "s_texture"), 0);
     
-    loadMap("assets/hl2/maps/d1_canals_01.bsp");
+    loadMap("assets/hl2/maps/d1_trainstation_02.bsp");
 }
 
 SourceMapScene::~SourceMapScene() = default;
@@ -108,6 +109,28 @@ void SourceMapScene::loadMap(const std::string &filename)
     {
         transformMatrix(m_staticProps[i].transform, bsp.m_staticProps[i].angles, bsp.m_staticProps[i].origin);
         m_staticProps[i].instance = bsp.m_staticProps[i].modelIndex;
+        
+        m_staticProps[i].ambient.resize(6);
+        
+        for (int j = 0; j < 6; ++j) {
+            m_staticProps[i].ambient[j] = {1, 0, 1};
+        }
+        
+        if (bsp.m_staticProps[i].leafIndex < bsp.m_leafAmbientCubes.size())
+        {
+            const auto& ambientCube = bsp.m_leafAmbientCubes[bsp.m_staticProps[i].leafIndex];
+            
+            for (int j = 0; j < 6; ++j)
+            {
+                const auto& sample = ambientCube.color[j];
+                
+                float m = glm::pow(2.0f, sample.exponent);
+                
+                m_staticProps[i].ambient[j].x = sample.r * m;
+                m_staticProps[i].ambient[j].y = sample.g * m;
+                m_staticProps[i].ambient[j].z = sample.b * m;
+            }
+        }
     }
     
     m_mesh.initFromBsp(&bsp);
@@ -143,6 +166,9 @@ void SourceMapScene::draw()
     {
         mvp = m_pCamera->projection * m_pCamera->view * prop.transform;
         mdl_shader.setUniform("uMVP", mvp);
+        
+//        mdl_shader.setUniform("uAmbient_0", prop.ambient[0]);
+        mdl_shader.setUniform("u_AmbientCube", prop.ambient);
         
         m_staticPropInstances[prop.instance].draw();
     }

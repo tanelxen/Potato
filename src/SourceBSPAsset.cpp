@@ -99,8 +99,8 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
         return false;
     }
     
-    if (header.version != 19) {
-        printf("%s isn't 19 version\n", filename.c_str());
+    if (!(header.version == 19 || header.version == 20)) {
+        printf("%s isn't 19 or 20 version\n", filename.c_str());
         return false;
     }
     
@@ -192,6 +192,28 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
     fseek(fp, lumps[LUMP_LIGHTING].fileofs, SEEK_SET);
     fread(m_lightmap.data(), numLightmapSamples, sizeof(ColorRGBExp32), fp);
     
+    if (lumps[LUMP_LEAFS].version == 0)
+    {
+        int count = lumps[LUMP_LEAFS].filelen / sizeof(dleaf_t_19);
+        
+        std::vector<dleaf_t_19> old_leafs(count);
+        
+        fseek(fp, lumps[LUMP_LEAFS].fileofs, SEEK_SET);
+        fread(old_leafs.data(), count, sizeof(dleaf_t_19), fp);
+        
+        m_leafAmbientCubes.resize(count);
+        
+        for (int i = 0; i < count; ++i)
+        {
+            m_leafAmbientCubes[i].color[0] = old_leafs[i].ambientLighting[0];
+            m_leafAmbientCubes[i].color[1] = old_leafs[i].ambientLighting[1];
+            m_leafAmbientCubes[i].color[2] = old_leafs[i].ambientLighting[2];
+            m_leafAmbientCubes[i].color[3] = old_leafs[i].ambientLighting[3];
+            m_leafAmbientCubes[i].color[4] = old_leafs[i].ambientLighting[4];
+            m_leafAmbientCubes[i].color[5] = old_leafs[i].ambientLighting[5];
+        }
+    }
+    
 //    {
 //        int pakLength = lumps[LUMP_PAKFILE].filelen;
 //        std::vector<char> pakData;
@@ -264,10 +286,13 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
                     fread(&prop.origin, 1, sizeof(glm::vec3), fp);
                     fread(&prop.angles, 1, sizeof(glm::vec3), fp);
                     fread(&prop.modelIndex, 1, sizeof(uint16_t), fp);
+                    fread(&prop.leafIndex, 1, sizeof(uint16_t), fp);
+                    fread(&prop.leafCount, 1, sizeof(uint16_t), fp);
                     
                     offset += 56;
                     
                     if (lump.version > 4) offset += 4;
+                    if (lump.version > 5) offset += 4;
                 }
             }
         }

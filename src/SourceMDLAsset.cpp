@@ -140,6 +140,7 @@ void SourceMDLAsset::loadFromFile(const std::string &mdl_filename)
     {
         m_vertices.push_back({
             .position = {vert.position.x, vert.position.y, vert.position.z},
+            .normal = {vert.normal.x, vert.normal.y, vert.normal.z},
             .uv = {vert.uv.s, vert.uv.t}
         });
     }

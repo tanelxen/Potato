@@ -80,6 +80,12 @@ void VVDFile::loadFromBuffer(const void* buffer)
                 .z = pVert->m_vecPosition[2]
             };
             
+            lods[0].vertices[i].normal = {
+                .x = pVert->m_vecNormal[0],
+                .y = pVert->m_vecNormal[1],
+                .z = pVert->m_vecNormal[2]
+            };
+            
             lods[0].vertices[i].uv = {
                 .s = pVert->m_vecTexCoord[0],
                 .t = pVert->m_vecTexCoord[1]

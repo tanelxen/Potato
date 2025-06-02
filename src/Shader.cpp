@@ -201,7 +201,7 @@ void Shader::setUniform(const std::string &name, const std::vector<glm::vec3> &v
         return;
     }
     
-    glUniform4fv(location, (GLsizei)(vectors.size()), &(vectors[0][0]));
+    glUniform3fv(location, (GLsizei)(vectors.size()), &(vectors[0][0]));
 }
 
 void Shader::setUniform(const std::string &name, const std::vector<glm::mat4> &matrices) const
