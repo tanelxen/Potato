@@ -10,22 +10,22 @@
 #include <GLFW/glfw3.h>
 #include "Q3BspCollision.h"
 
-static float cl_forwardspeed = 400.0;
-static float cl_sidespeed = 350.0;
-static float cl_movement_accelerate = 15.0;
-static float cl_movement_airaccelerate = 7.0;
-static float cl_movement_friction = 8.0;
-static float sv_gravity = 800.0;
-static float sv_max_speed = 320.0;
-static float cl_stop_speed = 200.0;
-static float cpm_air_stop_acceleration = 2.5;
-static float cpm_air_control_amount = 150.0;
-static float cpm_strafe_acceleration = 70.0;
-static float cpm_wish_speed = 30.0;
+static constexpr float cl_forwardspeed = 400.0;
+static constexpr float cl_sidespeed = 350.0;
+static constexpr float cl_movement_accelerate = 15.0;
+static constexpr float cl_movement_airaccelerate = 7.0;
+static constexpr float cl_movement_friction = 8.0;
+static constexpr float sv_gravity = 800.0;
+static constexpr float sv_max_speed = 320.0;
+static constexpr float cl_stop_speed = 200.0;
+static constexpr float cpm_air_stop_acceleration = 2.5;
+static constexpr float cpm_air_control_amount = 150.0;
+static constexpr float cpm_strafe_acceleration = 70.0;
+static constexpr float cpm_wish_speed = 30.0;
 
-static int MAX_CLIP_PLANES = 5;
-static float OVERCLIP = 1.001;
-static float STEPSIZE = 18;
+static constexpr int MAX_CLIP_PLANES = 5;
+static constexpr float OVERCLIP = 1.001;
+static constexpr float STEPSIZE = 18;
 
 static glm::vec3 player_mins = { -15, -15, -24 };
 static glm::vec3 player_maxs = { 15, 15, 32 };

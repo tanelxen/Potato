@@ -137,6 +137,18 @@ target_include_directories(${PROJECT_NAME} PRIVATE vendor/glm)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw imgui)
 
+
+
+set(ASSETS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/assets")
+set(ASSETS_LINK_NAME "${CMAKE_BINARY_DIR}/bin/assets")
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}/assets
+)
+
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

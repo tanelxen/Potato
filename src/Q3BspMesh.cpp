@@ -113,7 +113,7 @@ void Q3BspMesh::GenerateTexture()
     GLuint missing_id;
     glGenTextures(1, &missing_id); // generate missing texture
 
-    unsigned char* image = stbi_load("assets/textures/_engine/missing.png", &width, &height, &num_channels, 3);
+    unsigned char* image = stbi_load("assets/_engine/missing.png", &width, &height, &num_channels, 3);
 
     glBindTexture(GL_TEXTURE_2D, missing_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 #include <glm/glm.hpp>
 
 typedef unsigned char byte;
@@ -164,4 +164,36 @@ struct dgamelump_t
     unsigned short    version;    // gamelump version
     int        fileofs;    // offset to this gamelump
     int        filelen;    // length
+};
+
+enum emittype_t
+{
+    emit_surface,        // 90 degree spotlight
+    emit_point,            // simple point light source
+    emit_spotlight,        // spotlight with penumbra
+    emit_skylight,        // directional light with no falloff (surface must trace to SKY texture)
+    emit_quakelight,    // linear falloff, non-lambertian
+    emit_skyambient,    // spherical light source with no falloff (surface must trace to SKY texture)
+};
+
+struct dworldlight_t
+{
+    glm::vec3        origin;
+    glm::vec3        intensity;
+    glm::vec3        normal;            // for surfaces and spotlights
+    int            cluster;
+    emittype_t    type;
+    int            style;
+    float        stopdot;        // start of penumbra for emit_spotlight
+    float        stopdot2;        // end of penumbra for emit_spotlight
+    float        exponent;        //
+    float        radius;            // cutoff distance
+    // falloff for emit_spotlight + emit_point:
+    // 1 / (constant_attn + linear_attn * dist + quadratic_attn * dist^2)
+    float        constant_attn;
+    float        linear_attn;
+    float        quadratic_attn;
+    int            flags;            // Uses a combination of the DWL_FLAGS_ defines.
+    int            texinfo;        //
+    int            owner;            // entity that this light it relative to
 };

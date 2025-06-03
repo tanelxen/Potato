@@ -29,14 +29,17 @@ struct SourceBSPAsset
         uint16_t modelIndex;
         uint16_t leafIndex;
         uint16_t leafCount;
+        glm::vec3 lightOrigin;
     };
     
     struct LeafAmbientCube_t
     {
         ColorRGBExp32 color[6];
+        glm::vec3 pos;
     };
     
     bool initFromFile(const std::string& filename);
+    int findLeaf(glm::vec3 pos);
     
     std::string m_entities;
     
@@ -57,6 +60,7 @@ struct SourceBSPAsset
     std::vector<dtexinfo_t> m_texinfos;
     
     std::vector<dplane_t> m_planes;
+    std::vector<dnode_t> m_nodes;
     
     std::vector<ColorRGBExp32> m_lightmap;
     
@@ -64,4 +68,6 @@ struct SourceBSPAsset
     std::vector<StaticProp_t> m_staticProps;
     
     std::vector<LeafAmbientCube_t> m_leafAmbientCubes;
+    
+    std::vector<dworldlight_t> m_worldLights;
 };

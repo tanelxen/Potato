@@ -28,6 +28,9 @@
 #include "DebugRenderer.h"
 #include "Cube.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #define degrees(rad) ((rad) * (180.0f / M_PI))
 #define radians(deg) ((deg) * (M_PI / 180.0f))

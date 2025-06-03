@@ -6,7 +6,6 @@
 //
 
 #include "VVDFile.h"
-#include <cstdint>
 
 #define MAX_NUM_BONES_PER_VERT 3
 #define MAX_NUM_LODS 8
@@ -109,6 +108,11 @@ void VVDFile::loadFromBuffer(const void* buffer)
                             .x = pVert->m_vecPosition[0],
                             .y = pVert->m_vecPosition[1],
                             .z = pVert->m_vecPosition[2]
+                        },
+                        .normal = {
+                            .x = pVert->m_vecNormal[0],
+                            .y = pVert->m_vecNormal[1],
+                            .z = pVert->m_vecNormal[2]
                         },
                         .uv = {
                             .s = pVert->m_vecTexCoord[0],

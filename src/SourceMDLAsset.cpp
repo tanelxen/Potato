@@ -6,7 +6,6 @@
 //
 
 #include <iostream>
-#include <span>
 
 #include "SourceMDLAsset.h"
 #include "MDLFile.h"

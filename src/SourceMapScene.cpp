@@ -20,6 +20,9 @@
 
 #include "Input.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #define degrees(rad) ((rad) * (180.0f / M_PI))
 #define radians(deg) ((deg) * (M_PI / 180.0f))
@@ -40,7 +43,7 @@ SourceMapScene::SourceMapScene(Camera *camera) : m_pCamera(camera)
     mdl_shader.init("assets/shaders/source_mdl.glsl");
     glUniform1i(glGetUniformLocation(mdl_shader.program, "s_texture"), 0);
     
-    loadMap("assets/hl2/maps/d1_trainstation_02.bsp");
+    loadMap("assets/hl2/maps/d1_canals_01a.bsp");
 }
 
 SourceMapScene::~SourceMapScene() = default;
@@ -113,12 +116,17 @@ void SourceMapScene::loadMap(const std::string &filename)
         m_staticProps[i].ambient.resize(6);
         
         for (int j = 0; j < 6; ++j) {
-            m_staticProps[i].ambient[j] = {1, 0, 1};
+            m_staticProps[i].ambient[j] = {1, 1, 1};
         }
         
-        if (bsp.m_staticProps[i].leafIndex < bsp.m_leafAmbientCubes.size())
+        glm::vec3 lightOrigin = bsp.m_staticProps[i].origin + bsp.m_staticProps[i].lightOrigin;
+        int leafIndex = bsp.findLeaf(lightOrigin);
+        
+//        leafIndex = bsp.m_staticProps[i].leafIndex;
+        
+        if (leafIndex < bsp.m_leafAmbientCubes.size())
         {
-            const auto& ambientCube = bsp.m_leafAmbientCubes[bsp.m_staticProps[i].leafIndex];
+            const auto& ambientCube = bsp.m_leafAmbientCubes[leafIndex];
             
             for (int j = 0; j < 6; ++j)
             {
@@ -160,14 +168,21 @@ void SourceMapScene::draw()
     glm::mat4x4 mvp = m_pCamera->projection * m_pCamera->view;
     m_mesh.renderFaces(mvp);
     
+//    for (int i = 0; i < leafAmbientCubes.size(); ++i)
+//    {
+//        cube.position = leafAmbientCubes[i].pos;
+//        cube.scale = {16, 16, 16};
+//        
+//        cube.draw(*m_pCamera, leafAmbientCubes[i].color);
+//    }
+    
     mdl_shader.bind();
     
     for (auto& prop : m_staticProps)
     {
         mvp = m_pCamera->projection * m_pCamera->view * prop.transform;
         mdl_shader.setUniform("uMVP", mvp);
-        
-//        mdl_shader.setUniform("uAmbient_0", prop.ambient[0]);
+        mdl_shader.setUniform("uModel", prop.transform);
         mdl_shader.setUniform("u_AmbientCube", prop.ambient);
         
         m_staticPropInstances[prop.instance].draw();

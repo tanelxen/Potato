@@ -157,6 +157,13 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
     fseek(fp, lumps[LUMP_PLANES].fileofs, SEEK_SET);
     fread(m_planes.data(), numPlanes, sizeof(dplane_t), fp);
     
+    {
+        int count = lumps[LUMP_NODES].filelen / sizeof(dnode_t);
+        m_nodes.resize(count);
+        fseek(fp, lumps[LUMP_NODES].fileofs, SEEK_SET);
+        fread(m_nodes.data(), count, sizeof(dnode_t), fp);
+    }
+    
     int numModels = lumps[LUMP_MODELS].filelen / sizeof(dmodel_t);
     m_models.resize(numModels);
     fseek(fp, lumps[LUMP_MODELS].fileofs, SEEK_SET);
@@ -211,6 +218,10 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
             m_leafAmbientCubes[i].color[3] = old_leafs[i].ambientLighting[3];
             m_leafAmbientCubes[i].color[4] = old_leafs[i].ambientLighting[4];
             m_leafAmbientCubes[i].color[5] = old_leafs[i].ambientLighting[5];
+            
+            m_leafAmbientCubes[i].pos.x = (old_leafs[i].mins[0] + old_leafs[i].maxs[0]) * 0.5;
+            m_leafAmbientCubes[i].pos.y = (old_leafs[i].mins[1] + old_leafs[i].maxs[1]) * 0.5;
+            m_leafAmbientCubes[i].pos.z = (old_leafs[i].mins[2] + old_leafs[i].maxs[2]) * 0.5;
         }
     }
     
@@ -289,6 +300,23 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
                     fread(&prop.leafIndex, 1, sizeof(uint16_t), fp);
                     fread(&prop.leafCount, 1, sizeof(uint16_t), fp);
                     
+                    uint8_t solid;
+                    fread(&solid, 1, sizeof(uint8_t), fp);
+                    
+                    uint8_t flags;
+                    fread(&flags, 1, sizeof(uint8_t), fp);
+                    
+                    uint32_t skin;
+                    fread(&skin, 1, sizeof(uint32_t), fp);
+                    
+                    float FadeMinDist;
+                    fread(&FadeMinDist, 1, sizeof(float), fp);
+                    
+                    float FadeMaxDist;
+                    fread(&FadeMaxDist, 1, sizeof(float), fp);
+                    
+                    fread(&prop.lightOrigin, 1, sizeof(glm::vec3), fp);
+                    
                     offset += 56;
                     
                     if (lump.version > 4) offset += 4;
@@ -298,9 +326,43 @@ bool SourceBSPAsset::initFromFile(const std::string &filename)
         }
     }
     
+    {
+        int count = lumps[LUMP_WORLDLIGHTS].filelen / sizeof(dworldlight_t);
+        m_worldLights.resize(count);
+        fseek(fp, lumps[LUMP_WORLDLIGHTS].fileofs, SEEK_SET);
+        fread(m_worldLights.data(), count, sizeof(dworldlight_t), fp);
+        int o;
+    }
+    
     fclose(fp);
     return (fp);
 }
+
+int SourceBSPAsset::findLeaf(glm::vec3 pos)
+{
+    int i = m_models[0].headnode;
+    float distance = 0.0f;
+    
+    while(i >= 0)
+    {
+        const dnode_t& node = m_nodes[i];
+        const dplane_t& plane = m_planes[node.planenum];
+        
+        distance = plane.normal.x * pos.x + plane.normal.y * pos.y + plane.normal.z * pos.z - plane.dist;
+        
+        if(distance >= 0)
+        {
+            i = node.children[0];
+        }
+        else
+        {
+            i = node.children[1];
+        }
+    }
+    
+    return -(i + 1);
+}
+
 
 std::string extractBaseTexture(const std::string& materialName)
 {

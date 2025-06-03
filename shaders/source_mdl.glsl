@@ -6,6 +6,7 @@ layout (location = 2) in vec2 texCoord;
 layout (location = 3) in uint boneIndex;
 
 uniform mat4 uMVP;
+uniform mat4 uModel;
 uniform vec3 u_AmbientCube[6];
 
 out vec2 uv;
@@ -17,7 +18,9 @@ void main()
 {
     gl_Position = uMVP * position;
     uv = texCoord;
-    ambient = AmbientLight(normal);
+    
+    vec3 n_normal = normalize(mat3(uModel) * normal);
+    ambient = AmbientLight(n_normal);
 }
 
 vec3 AmbientLight(in vec3 t_NormalWorld)

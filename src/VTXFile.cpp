@@ -6,7 +6,6 @@
 //
 
 #include "VTXFile.h"
-#include <cstdint>
 
 #define MAX_NUM_BONES_PER_VERT 3
 

@@ -6,15 +6,14 @@
 //
 
 #include "SourceModel.h"
+#include "VTFAsset.h"
+
 #include <glad/glad.h>
 
 #define GLM_ENABLE_EXPERIMENTAL 1
 #include <glm/gtx/quaternion.hpp>
 
 #include <filesystem>
-
-//unsigned int loadVTF(std::string filename);
-unsigned int loadTexture(std::string filename);
 
 SourceModel::~SourceModel()
 {
@@ -41,8 +40,8 @@ void SourceModel::init(const SourceMDLAsset& model)
         std::filesystem::path fs_path(path);
         fs_path = fs_path.make_preferred();
 
-        uint32_t id = loadTexture(fs_path.string());
-        m_textureIds.push_back(id);
+        uint32_t id = loadVTFTexture(fs_path.string());
+        m_textureIds.push_back(id > 0 ? id : 2);
     }
     
     std::vector<uint32_t> indices;
@@ -97,7 +96,6 @@ void SourceModel::draw()
     for (const auto& surface : m_surfaces)
     {
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, surface.textureIndex);
         
         if (surface.textureIndex < m_textureIds.size()) {
             glBindTexture(GL_TEXTURE_2D, m_textureIds[surface.textureIndex]);

@@ -10,18 +10,16 @@
 
 #include "Camera.h"
 #include "Shader.h"
+#include "VTFAsset.h"
 
 #include <glad/glad.h>
 #include "../vendor/stb_image.h"
-#include "../vendor/stb_image_write.h"
 
 #include <unordered_map>
 
 static SourceBSPAsset* g_bsp = nullptr;
 static Shader shader;
 static Shader shader_disp;
-
-unsigned int loadTexture(std::string filename);
 
 #define BLOCK_SIZE 1024
 GLuint allocated[BLOCK_SIZE];
@@ -157,7 +155,7 @@ void SourceBspMesh::generateTextures()
 //    GLuint missing_id;
     glGenTextures(1, &missing_id); // generate missing texture
     
-    unsigned char* image = stbi_load("assets/textures/_engine/missing.png", &width, &height, &num_channels, 3);
+    unsigned char* image = stbi_load("assets/_engine/missing.png", &width, &height, &num_channels, 3);
     
     glBindTexture(GL_TEXTURE_2D, missing_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -185,7 +183,7 @@ void SourceBspMesh::generateTextures()
         path.append(g_bsp->m_materials[i].name);
         path.append(".vtf");
         
-        GLuint id = loadTexture(path);
+        GLuint id = loadVTFTexture(path);
         
         if (id == 0) id = missing_id;
         
@@ -496,6 +494,8 @@ void CreateLightmapTex(ColorRGBExp32 *samples, float *dest, dface_t *face)
         dest += (BLOCK_SIZE - lightmapW) * 3;
     }
 }
+
+#include <string.h> /* For memset() */
 
 void LM_InitBlock()
 {

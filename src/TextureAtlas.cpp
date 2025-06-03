@@ -6,7 +6,7 @@
 //
 
 #include "TextureAtlas.h"
-#include <string>
+#include <string.h> /* For memset() */
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../vendor/stb_image_write.h"
